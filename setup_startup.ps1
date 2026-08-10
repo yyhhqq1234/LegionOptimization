@@ -77,7 +77,12 @@ Write-Host "[2/4] LegionProfile (FIVR inject +30s)..."
 $tr2 = "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scriptDir\startup.ps1`""
 & schtasks.exe /create /tn "LegionProfile" /tr $tr2 /sc ONLOGON /delay 0000:30 /rl HIGHEST /f
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "  [OK] LegionProfile created"
+    # Allow running on battery (scheduled tasks block battery by default)
+    $lpTask = Get-ScheduledTask -TaskName "LegionProfile"
+    $lpTask.Settings.DisallowStartIfOnBatteries = $false
+    $lpTask.Settings.StopIfGoingOnBatteries = $false
+    Set-ScheduledTask -InputObject $lpTask | Out-Null
+    Write-Host "  [OK] LegionProfile created (battery allowed)"
 } else {
     Write-Host "  [FAILED] Exit code: $LASTEXITCODE"
 }
@@ -108,7 +113,12 @@ Write-Host "[4/4] LegionUpdate (weekly update check)..."
 $tr4 = "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scriptDir\check_update.ps1`""
 & schtasks.exe /create /tn "LegionUpdate" /tr $tr4 /sc WEEKLY /d SUN /st 03:00 /rl HIGHEST /f
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "  [OK] LegionUpdate created"
+    # Allow running on battery (scheduled tasks block battery by default)
+    $luTask = Get-ScheduledTask -TaskName "LegionUpdate"
+    $luTask.Settings.DisallowStartIfOnBatteries = $false
+    $luTask.Settings.StopIfGoingOnBatteries = $false
+    Set-ScheduledTask -InputObject $luTask | Out-Null
+    Write-Host "  [OK] LegionUpdate created (battery allowed)"
 } else {
     Write-Host "  [FAILED] Exit code: $LASTEXITCODE"
 }

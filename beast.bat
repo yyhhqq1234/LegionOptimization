@@ -28,19 +28,27 @@ if exist "%TS_PROFILE_INI%" (
 :: Step 3: Switch to High Performance plan and configure CPU (Beast: 5.0GHz, Aggressive turbo)
 powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
 powercfg /setacvalueindex scheme_current sub_processor be337238-0d82-4146-a960-4f3749d470c7 1
+powercfg /setdcvalueindex scheme_current sub_processor be337238-0d82-4146-a960-4f3749d470c7 1
 powercfg /setacvalueindex scheme_current sub_processor 75b0ae3f-bce0-45a7-8c89-c9611c25e100 5000
 powercfg /setacvalueindex scheme_current sub_processor 75b0ae3f-bce0-45a7-8c89-c9611c25e101 5000
+powercfg /setdcvalueindex scheme_current sub_processor 75b0ae3f-bce0-45a7-8c89-c9611c25e100 5000
+powercfg /setdcvalueindex scheme_current sub_processor 75b0ae3f-bce0-45a7-8c89-c9611c25e101 5000
 powercfg /setactive scheme_current
-echo [beast] High Perf plan + Aggressive turbo, Max=5.0GHz
+echo [beast] High Perf plan + Aggressive turbo, Max=5.0GHz (AC+DC)
 
-:: Step 4: Start TS to inject FIVR
+:: Step 4: Start TS, verify it launched (3s), wait for FIVR (2s)
 schtasks /run /tn "ThrottleStop_NoUAC" >nul 2>&1
-echo [%date% %time%] [beast] TS started >> "%LOG_FILE%"
+timeout /t 3 /nobreak >nul
+tasklist /fi "imagename eq ThrottleStop.exe" 2>nul | find /i "ThrottleStop" >nul
+if %errorlevel% equ 0 (
+    echo [%date% %time%] [beast] TS started >> "%LOG_FILE%"
+    timeout /t 2 /nobreak >nul
+) else (
+    echo [%date% %time%] [beast] TS FAILED to start! >> "%LOG_FILE%"
+)
 
-:: Step 5: Wait for FIVR injection then kill TS
-timeout /t 5 /nobreak >nul
+:: Step 5: Kill TS
 taskkill /f /t /im ThrottleStop.exe >nul 2>&1
-powershell -Command "Stop-Process -Name ThrottleStop -Force -ErrorAction SilentlyContinue" >nul 2>&1
 echo [%date% %time%] [beast] TS killed, done >> "%LOG_FILE%"
 
 echo [beast] Beast Mode applied.
