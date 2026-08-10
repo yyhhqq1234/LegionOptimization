@@ -4,9 +4,9 @@
 
 ---
 
-## 当前状态：全部 4 档 Fn+Q 模式正常触发
+## 当前状态：✅ 项目完成 — 可迁移 & 重启后完全生效
 
-**更新时间**：2026-08-10 17:15
+**更新时间**：2026-08-10 17:30
 
 ### 4 档模式覆盖
 
@@ -19,24 +19,57 @@
 
 ### 架构
 
-- **LLT Automation** (`automation.json`): 4 条 pipeline，其中 Quiet/Balance/Beast 通过 `PowerModeAutomationPipelineTrigger` 触发
-- **PowerModeWatcher.ps1**: 独立 WMI 后台监听器，监听 `LENOVO_GAMEZONE_THERMAL_MODE_EVENT`，只处理 mode=224 (超能/Extreme)，在 `start_llt.bat` 中随 LLT 一起启动
-- **批处理脚本**: `quiet.bat` / `balance.bat` / `beast.bat` / `custom.bat` — 每个脚本执行：kill TS → 复制 INI → powercfg 设频率 → 启动 TS → 等5秒 → kill TS
-- **ThrottleStop**: 启→注入 FIVR→杀进程 ("fire-and-forget")
-- **计划任务**: `LegionLLT` (启动 LLT+Watcher), `LegionProfile` (启动时注入), `ThrottleStop_NoUAC` (无 UAC 启动 TS)
+```
+Fn+Q →
+  Quiet/Balance/Beast → LLT Automation (PowerModeAutomationPipelineTrigger)
+  Extreme/超能 → PowerModeWatcher.ps1 (LENOVO_GAMEZONE_THERMAL_MODE_EVENT)
 
-### 关键发现
+每个 bat 执行：kill TS → copy INI → powercfg → TS 注入 → 等5s → kill TS
 
-`LENOVO_GAMEZONE_SMART_FAN_MODE_EVENT` 在 Y7000 2025 IAX10 上**不会**为第4档 (超能) 触发，只有前3档。
-`LENOVO_GAMEZONE_THERMAL_MODE_EVENT` 对全部4档都触发，超能对应 mode=224。
+开机链：
+  Logon → LegionLLT 计划任务 → start_llt.bat → LLT (系统托盘) + PowerModeWatcher.ps1
+  Logon +30s → LegionProfile 计划任务 → startup_inject.bat → 初始 FIVR 注入
+```
 
-### LLT 源码修改
+### 已完成的清理 & 可移植化
 
-1. `PowerModeListener.cs` — `GetValue()`: 添加 value=4 → Extreme 映射（备用）
-2. `ThermalModeListener.cs` — `GetValue()`: 添加 value=4 → Extreme 映射（备用）
-3. `AutomationProcessor.cs` — 添加 `ThermalModeListener` 订阅，映射 ThermalModeState → PowerModeState → PowerModeAutomationEvent
+- ✅ 所有脚本使用 `%~dp0` / `$PSScriptRoot` 相对路径（可迁移到任意目录）
+- ✅ 删除调试文件：`debug_wmi.ps1`, `debug_wmi_capture.ps1`, `query_wmi.ps1`
+- ✅ 删除废弃文件：`hotkey_switch.ps1`, `start_ts_hidden.ps1`, `FivrInjector/`
+- ✅ 删除冗余文件：`setup_ts_nouac.bat`, `run_llt_admin.bat`, `create_watcher_task.bat`, `setup_watcher.ps1`
+- ✅ 删除测试文件：`test_pause.bat`
+- ✅ LLT 编译后文件移到 `llt-build/`，源码补丁在 `llt-patches/`
+- ✅ LLT 完整源码树已删除（38项目，不需要）
+- ✅ Git 仓库已初始化，`.gitignore` 已配置
+- ✅ `README.md` 含完整中英文说明
+- ✅ `configure.bat` 用于在其他机器上更新 automation.json 路径
 
-### 待解决
+### 计划任务（3 个）
 
-- 旧 LLT 进程 (PID 19180) 无法终止，使用旧代码。重启系统后新 LLT 生效。
-- TS 弹窗暂时无法完全隐藏（TS 是 GUI 应用），但 MiniMode 下窗口很小。
+| 任务名 | 触发 | 运行 |
+|--------|------|------|
+| `LegionLLT` | 登录时 | `start_llt.bat` (启动 LLT+Watcher) |
+| `LegionProfile` | 登录+30s | `startup_inject.bat` (初始 FIVR) |
+| `ThrottleStop_NoUAC` | 手动 (`schtasks /run`) | `ThrottleStop.exe` (绕过 UAC) |
+
+### 迁移到其他拯救者电脑
+
+1. 复制整个文件夹到 `D:\LegionOptimization`
+2. 以管理员运行 `setup_startup.bat`
+3. 在 LLT 中导入 `automation.template.json`
+4. 运行 `configure.bat` 更新路径
+5. 根据目标 CPU 调整 `ThrottleStop_profiles/*.ini` 和 `*.bat` 中的电压/频率值
+6. 重启测试
+
+### LLT 源码修复（llt-patches/）
+
+1. `PowerModeListener.cs` — GetValue: 添加 WMI value 4→Extreme
+2. `ThermalModeListener.cs` — GetValue: 添加 WMI value 4→Extreme
+3. `AutomationProcessor.cs` — 添加 ThermalModeListener 订阅 → PowerModeAutomationEvent
+
+### 已知限制
+
+- 超能模式 WMI 事件通过独立 watcher 解决（SmartFanModeEvent 在 Y7000 2025 IAX10 上不触发第 4 档）
+- TS 弹窗暂时无法完全隐藏（MiniMode+SuperMiniMode 最小化但非隐藏）
+- 旧 LLT 进程 (PID 19180) 下次重启后自动清除
+- `watcher.lock` 被 SYSTEM 级 watcher 进程锁定，重启后自动清除
