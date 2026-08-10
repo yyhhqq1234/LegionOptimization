@@ -49,13 +49,23 @@ if not exist "%TS_DIR%\ThrottleStop.exe" (
     pause
     exit /b 1
 )
-if not exist "%SCRIPT_DIR%\start_llt.bat" (
-    echo [ERROR] start_llt.bat not found
+if not exist "%SCRIPT_DIR%\start_llt.ps1" (
+    echo [ERROR] start_llt.ps1 not found
     pause
     exit /b 1
 )
-if not exist "%SCRIPT_DIR%\startup_inject.bat" (
-    echo [ERROR] startup_inject.bat not found
+if not exist "%SCRIPT_DIR%\startup.ps1" (
+    echo [ERROR] startup.ps1 not found
+    pause
+    exit /b 1
+)
+if not exist "%SCRIPT_DIR%\PowerModeWatcher.ps1" (
+    echo [ERROR] PowerModeWatcher.ps1 not found
+    pause
+    exit /b 1
+)
+if not exist "%SCRIPT_DIR%\check_update.ps1" (
+    echo [ERROR] check_update.ps1 not found
     pause
     exit /b 1
 )
@@ -66,10 +76,10 @@ echo.
 :: ============================================================
 :: Task 1: LLT Auto-Start
 :: ============================================================
-echo [1/3] Creating LegionLLT...
+echo [1/4] Creating LegionLLT...
 schtasks /delete /tn "LegionLLT" /f >nul 2>&1
 schtasks /create /tn "LegionLLT" ^
-    /tr "\"%SCRIPT_DIR%\start_llt.bat\"" ^
+    /tr "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_DIR%start_llt.ps1\"" ^
     /sc ONLOGON ^
     /rl HIGHEST ^
     /f
@@ -82,10 +92,10 @@ if %errorlevel% equ 0 (
 :: ============================================================
 :: Task 2: Startup FIVR Injector
 :: ============================================================
-echo [2/3] Creating LegionProfile...
+echo [2/4] Creating LegionProfile...
 schtasks /delete /tn "LegionProfile" /f >nul 2>&1
 schtasks /create /tn "LegionProfile" ^
-    /tr "\"%SCRIPT_DIR%\startup_inject.bat\"" ^
+    /tr "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_DIR%startup.ps1\"" ^
     /sc ONLOGON ^
     /delay 0000:30 ^
     /rl HIGHEST ^
@@ -99,7 +109,7 @@ if %errorlevel% equ 0 (
 :: ============================================================
 :: Task 3: ThrottleStop NoUAC Launcher
 :: ============================================================
-echo [3/3] Creating ThrottleStop_NoUAC...
+echo [3/4] Creating ThrottleStop_NoUAC...
 schtasks /delete /tn "ThrottleStop_NoUAC" /f >nul 2>&1
 schtasks /create /tn "ThrottleStop_NoUAC" ^
     /tr "\"%TS_DIR%\ThrottleStop.exe\"" ^
