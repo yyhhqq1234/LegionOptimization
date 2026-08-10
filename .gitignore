@@ -6,7 +6,8 @@ watcher_log.txt
 # Runtime lock files
 *.lock
 
-# ThrottleStop logs
+# ThrottleStop runtime files (overwritten on every mode switch)
+ThrottleStop/ThrottleStop.ini
 ThrottleStop/Logs/
 
 # Build artifacts
