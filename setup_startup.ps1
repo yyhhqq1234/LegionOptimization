@@ -90,7 +90,12 @@ Write-Host "[3/4] ThrottleStop_NoUAC..."
 $tsExe = "$tsDir\ThrottleStop.exe"
 & schtasks.exe /create /tn "ThrottleStop_NoUAC" /tr $tsExe /sc ONCE /st 00:00 /rl HIGHEST /f
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "  [OK] ThrottleStop_NoUAC created"
+    # Allow running on battery (scheduled tasks block battery by default)
+    $tsTask = Get-ScheduledTask -TaskName "ThrottleStop_NoUAC"
+    $tsTask.Settings.DisallowStartIfOnBatteries = $false
+    $tsTask.Settings.StopIfGoingOnBatteries = $false
+    Set-ScheduledTask -InputObject $tsTask | Out-Null
+    Write-Host "  [OK] ThrottleStop_NoUAC created (battery allowed)"
 } else {
     Write-Host "  [FAILED] Exit code: $LASTEXITCODE"
 }
