@@ -25,11 +25,13 @@ if exist "%TS_PROFILE_INI%" (
     exit /b 1
 )
 
-:: Step 3: Set CPU max frequency via Windows power plan (Balance: 4.8GHz)
+:: Step 3: Switch to Balanced plan and configure CPU (Balance: 4.8GHz, Efficient turbo)
+powercfg /setactive 381b4222-f694-41f0-9685-ff5bb260df2e
+powercfg /setacvalueindex scheme_current sub_processor be337238-0d82-4146-a960-4f3749d470c7 2
 powercfg /setacvalueindex scheme_current sub_processor 75b0ae3f-bce0-45a7-8c89-c9611c25e100 4800
 powercfg /setacvalueindex scheme_current sub_processor 75b0ae3f-bce0-45a7-8c89-c9611c25e101 4800
 powercfg /setactive scheme_current
-echo [balance] Power plan: Max=4.8GHz
+echo [balance] Balanced plan + Efficient turbo, Max=4.8GHz
 
 :: Step 4: Start TS to inject FIVR
 schtasks /run /tn "ThrottleStop_NoUAC" >nul 2>&1

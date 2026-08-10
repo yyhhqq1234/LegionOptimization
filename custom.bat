@@ -25,11 +25,13 @@ if exist "%TS_PROFILE_INI%" (
     exit /b 1
 )
 
-:: Step 3: Set CPU max frequency via Windows power plan (Custom: 5.2GHz)
+:: Step 3: Switch to Ultimate/High Performance plan and configure CPU (Extreme: 5.2GHz, Aggressive turbo)
+powercfg /setactive e9a42b02-d5df-448d-aa00-03f14749eb61 2>nul || powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
+powercfg /setacvalueindex scheme_current sub_processor be337238-0d82-4146-a960-4f3749d470c7 1
 powercfg /setacvalueindex scheme_current sub_processor 75b0ae3f-bce0-45a7-8c89-c9611c25e100 5200
 powercfg /setacvalueindex scheme_current sub_processor 75b0ae3f-bce0-45a7-8c89-c9611c25e101 5200
 powercfg /setactive scheme_current
-echo [custom] Power plan: Max=5.2GHz
+echo [custom] Ultimate Perf plan + Aggressive turbo, Max=5.2GHz
 
 :: Step 4: Start TS to inject FIVR
 schtasks /run /tn "ThrottleStop_NoUAC" >nul 2>&1

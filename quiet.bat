@@ -25,11 +25,13 @@ if exist "%TS_PROFILE_INI%" (
     exit /b 1
 )
 
-:: Step 3: Set CPU max frequency via Windows power plan (Quiet: 3.8GHz)
+:: Step 3: Switch to Power Saver plan and configure CPU (Quiet: 3.8GHz, Turbo off)
+powercfg /setactive a1841308-3541-4fab-bc81-f71556f20b4a
+powercfg /setacvalueindex scheme_current sub_processor be337238-0d82-4146-a960-4f3749d470c7 0
 powercfg /setacvalueindex scheme_current sub_processor 75b0ae3f-bce0-45a7-8c89-c9611c25e100 3800
 powercfg /setacvalueindex scheme_current sub_processor 75b0ae3f-bce0-45a7-8c89-c9611c25e101 3800
 powercfg /setactive scheme_current
-echo [quiet] Power plan: Max=3.8GHz
+echo [quiet] Power Saver + Turbo off, Max=3.8GHz
 
 :: Step 4: Start TS to inject FIVR
 schtasks /run /tn "ThrottleStop_NoUAC" >nul 2>&1
