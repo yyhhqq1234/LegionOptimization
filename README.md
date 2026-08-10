@@ -44,9 +44,13 @@ Boot chain:
 
 On some hardware (e.g., Y7000 2025 IAX10), `LENOVO_GAMEZONE_SMART_FAN_MODE_EVENT` only fires for the first 3 Fn+Q positions. The 4th position (超能/Extreme) only fires `LENOVO_GAMEZONE_THERMAL_MODE_EVENT` with mode=224. `PowerModeWatcher.ps1` independently monitors the thermal mode event to catch this.
 
-LLT's `ThermalModeListener` already receives this event, but the stock LLT code only uses it to set the Windows power plan — it doesn't publish to the automation messaging system. Our patched LLT build (`llt-build/`) adds this hook. Source patches are in `llt-patches/`.
+The watcher runs independently of LLT — no LLT source modifications are needed. Stock official LLT from GitHub works fine.
 
 ## Setup
+
+### 0. Prerequisites
+1. Install [Lenovo Legion Toolkit](https://github.com/LenovoLegionToolkit-Team/LenovoLegionToolkit/releases) (latest stable release)
+2. Install [ThrottleStop](https://www.techpowerup.com/download/techpowerup-throttlestop/) (portable, included in `ThrottleStop/`)
 
 ### 1. Install location
 Clone/extract to **`D:\LegionOptimization`** (required — automation.json paths use this).
@@ -58,10 +62,11 @@ To install elsewhere, run `configure.bat` after setup to update the paths in LLT
 setup_startup.bat
 ```
 
-This creates 3 scheduled tasks:
+This creates 4 scheduled tasks:
 - `LegionLLT` — Launches LLT + watcher at logon
 - `LegionProfile` — Initial FIVR injection at logon (+30s delay)
 - `ThrottleStop_NoUAC` — Lets batch scripts launch ThrottleStop without UAC prompts
+- `LegionUpdate` — Weekly LLT auto-update check (Sunday 3:00 AM)
 
 ### 3. Import automation into LLT
 1. Open Lenovo Legion Toolkit
@@ -72,17 +77,29 @@ This creates 3 scheduled tasks:
 
 ### 4. Verify
 1. Reboot
-2. LLT should appear in system tray
+2. LLT should appear in system tray (no console popup)
 3. Press Fn+Q to cycle through modes
 4. ThrottleStop should briefly appear (MiniMode) then close for each switch
 5. Check `switch_log.txt` for execution log
 
+## Auto-Update
+
+`check_update.ps1` runs weekly via the `LegionUpdate` scheduled task:
+- Checks GitHub API for latest LLT release
+- Compares with installed version
+- Downloads and runs installer silently (`/VERYSILENT`)
+- Verifies `automation.json` survives the update (backs up and restores if needed)
+- Logs to `update_log.txt`
+
+LLT updates are from the official installer — they don't touch `%LOCALAPPDATA%\LenovoLegionToolkit\`, so automation configuration is preserved.
+
 ## Porting to Another Legion Laptop
 
 1. Copy the entire `LegionOptimization` folder to `D:\LegionOptimization`
-2. Adjust the undervolt and frequency values in `ThrottleStop_profiles/*.ini` and `*.bat` for your CPU
-3. Run `setup_startup.bat` as Administrator
-4. In LLT, import automation and run `configure.bat`
+2. Install LLT from GitHub releases
+3. Adjust the undervolt and frequency values in `ThrottleStop_profiles/*.ini` and `*.bat` for your CPU
+4. Run `setup_startup.bat` as Administrator
+5. In LLT, import automation and run `configure.bat`
 
 ### Adjusting for your CPU
 
@@ -98,14 +115,14 @@ This creates 3 scheduled tasks:
 |------|---------|
 | `quiet.bat` / `balance.bat` / `beast.bat` / `custom.bat` | Per-mode switch scripts |
 | `PowerModeWatcher.ps1` | WMI watcher for Extreme/超能 mode |
+| `check_update.ps1` | Weekly LLT auto-update checker |
 | `start_llt.bat` | LLT + watcher launcher |
 | `startup_inject.bat` | Boot-time FIVR injection |
 | `setup_startup.bat` | One-time scheduled task creation (run as admin) |
 | `configure.bat` | Update automation.json paths for current install |
+| `automation.template.json` | LLT automation import template |
 | `ThrottleStop/` | ThrottleStop portable + ThrottleStop.ini |
 | `ThrottleStop_profiles/` | Per-mode INI files |
-| `llt-build/` | Pre-built patched LLT |
-| `llt-patches/` | Modified LLT source files + build notes |
 
 ## Notes
 
@@ -113,3 +130,4 @@ This creates 3 scheduled tasks:
 - `SpeedShift=0` in ThrottleStop — frequency control is via Windows power plan (`powercfg`)
 - LLT must be closed before running `setup_startup.bat` (it restarts LLT on next logon)
 - ThrottleStop window briefly visible in MiniMode during mode switch; this is a TS limitation
+- LLT is the **official release** from GitHub — no source patches needed, auto-update works

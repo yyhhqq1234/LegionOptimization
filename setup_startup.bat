@@ -8,7 +8,7 @@ setlocal enabledelayedexpansion
 :: ============================================================
 
 set "SCRIPT_DIR=%~dp0"
-set "LLT_DIR=%SCRIPT_DIR%llt-build"
+set "LLT_EXE=C:\Program Files\LenovoLegionToolkit\Lenovo Legion Toolkit.exe"
 set "TS_DIR=%SCRIPT_DIR%ThrottleStop"
 
 :: Check admin
@@ -24,10 +24,11 @@ echo ============================================================
 echo   LegionOptimization — Startup Setup
 echo ============================================================
 echo.
-echo This will create 3 scheduled tasks:
+echo This will create 4 scheduled tasks:
 echo   1. LegionLLT             — LLT to system tray at logon
 echo   2. LegionProfile         — FIVR injector on boot (+30s)
 echo   3. ThrottleStop_NoUAC    — TS launcher without UAC
+echo   4. LegionUpdate          — Weekly LLT update check (Sun 3:00 AM)
 echo.
 echo After reboot:
 echo   Logon ^> LLT starts ^> detects power mode
@@ -37,8 +38,9 @@ echo ============================================================
 echo.
 
 :: Verify files
-if not exist "%LLT_DIR%\Lenovo Legion Toolkit.dll" (
-    echo [ERROR] LLT not found at: %LLT_DIR%
+if not exist "%LLT_EXE%" (
+    echo [ERROR] LLT not found at: %LLT_EXE%
+    echo Install from: https://github.com/LenovoLegionToolkit-Team/LenovoLegionToolkit/releases
     pause
     exit /b 1
 )
@@ -111,6 +113,22 @@ if %errorlevel% equ 0 (
 )
 
 :: ============================================================
+:: Task 4: Weekly LLT Auto-Update Check
+:: ============================================================
+echo [4/4] Creating LegionUpdate...
+schtasks /delete /tn "LegionUpdate" /f >nul 2>&1
+schtasks /create /tn "LegionUpdate" ^
+    /tr "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%SCRIPT_DIR%check_update.ps1\"" ^
+    /sc WEEKLY /d SUN /st 03:00 ^
+    /rl HIGHEST ^
+    /f
+if %errorlevel% equ 0 (
+    echo   LegionUpdate [OK]
+) else (
+    echo   LegionUpdate [FAILED] — errorlevel=%errorlevel%
+)
+
+:: ============================================================
 :: Verify all tasks
 :: ============================================================
 echo.
@@ -119,6 +137,7 @@ echo.
 schtasks /query /tn "LegionLLT" /fo TABLE /nh
 schtasks /query /tn "LegionProfile" /fo TABLE /nh
 schtasks /query /tn "ThrottleStop_NoUAC" /fo TABLE /nh
+schtasks /query /tn "LegionUpdate" /fo TABLE /nh
 
 echo.
 echo ============================================================
