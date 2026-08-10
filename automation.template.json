@@ -1,0 +1,89 @@
+{
+  "IsEnabled": true,
+  "Pipelines": [
+    {
+      "$type": "LenovoLegionToolkit.Lib.Automation.Pipeline.AutomationPipeline, LenovoLegionToolkit.Lib.Automation",
+      "Id": "a20b7bfe-d72f-480a-8320-b0ed2ecf4ea7",
+      "Name": "Quiet Mode — Apply Custom CPU/GPU",
+      "Trigger": {
+        "$type": "LenovoLegionToolkit.Lib.Automation.Pipeline.Triggers.PowerModeAutomationPipelineTrigger, LenovoLegionToolkit.Lib.Automation",
+        "PowerModeState": "Quiet"
+      },
+      "Steps": [
+        {
+          "$type": "LenovoLegionToolkit.Lib.Automation.Steps.RunAutomationStep, LenovoLegionToolkit.Lib.Automation",
+          "ScriptPath": "C:\\Windows\\System32\\cmd.exe",
+          "ScriptArguments": "/c D:\\LegionOptimization\\quiet.bat",
+          "RunSilently": true,
+          "WaitUntilFinished": true,
+          "CheckInstance": false
+        }
+      ],
+      "IsExclusive": true,
+      "RunOnStartup": true
+    },
+    {
+      "$type": "LenovoLegionToolkit.Lib.Automation.Pipeline.AutomationPipeline, LenovoLegionToolkit.Lib.Automation",
+      "Id": "655e44c5-3781-4ba5-b8d7-c97569848386",
+      "Name": "Balance Mode — Apply Custom CPU/GPU",
+      "Trigger": {
+        "$type": "LenovoLegionToolkit.Lib.Automation.Pipeline.Triggers.PowerModeAutomationPipelineTrigger, LenovoLegionToolkit.Lib.Automation",
+        "PowerModeState": "Balance"
+      },
+      "Steps": [
+        {
+          "$type": "LenovoLegionToolkit.Lib.Automation.Steps.RunAutomationStep, LenovoLegionToolkit.Lib.Automation",
+          "ScriptPath": "C:\\Windows\\System32\\cmd.exe",
+          "ScriptArguments": "/c D:\\LegionOptimization\\balance.bat",
+          "RunSilently": true,
+          "WaitUntilFinished": true,
+          "CheckInstance": false
+        }
+      ],
+      "IsExclusive": true,
+      "RunOnStartup": true
+    },
+    {
+      "$type": "LenovoLegionToolkit.Lib.Automation.Pipeline.AutomationPipeline, LenovoLegionToolkit.Lib.Automation",
+      "Id": "a28328a0-6bc1-408d-bf0e-cccfcff2438c",
+      "Name": "Beast Mode — Apply Custom CPU/GPU",
+      "Trigger": {
+        "$type": "LenovoLegionToolkit.Lib.Automation.Pipeline.Triggers.PowerModeAutomationPipelineTrigger, LenovoLegionToolkit.Lib.Automation",
+        "PowerModeState": "Performance"
+      },
+      "Steps": [
+        {
+          "$type": "LenovoLegionToolkit.Lib.Automation.Steps.RunAutomationStep, LenovoLegionToolkit.Lib.Automation",
+          "ScriptPath": "C:\\Windows\\System32\\cmd.exe",
+          "ScriptArguments": "/c D:\\LegionOptimization\\beast.bat",
+          "RunSilently": true,
+          "WaitUntilFinished": true,
+          "CheckInstance": false
+        }
+      ],
+      "IsExclusive": true,
+      "RunOnStartup": true
+    },
+    {
+      "$type": "LenovoLegionToolkit.Lib.Automation.Pipeline.AutomationPipeline, LenovoLegionToolkit.Lib.Automation",
+      "Id": "7035511e-2e82-499e-958c-327dc5bd54cb",
+      "Name": "Extreme Mode — Apply Custom CPU/GPU",
+      "Trigger": {
+        "$type": "LenovoLegionToolkit.Lib.Automation.Pipeline.Triggers.PowerModeAutomationPipelineTrigger, LenovoLegionToolkit.Lib.Automation",
+        "PowerModeState": "Extreme"
+      },
+      "Steps": [
+        {
+          "$type": "LenovoLegionToolkit.Lib.Automation.Steps.RunAutomationStep, LenovoLegionToolkit.Lib.Automation",
+          "ScriptPath": "C:\\Windows\\System32\\cmd.exe",
+          "ScriptArguments": "/c D:\\LegionOptimization\\custom.bat",
+          "RunSilently": true,
+          "WaitUntilFinished": true,
+          "CheckInstance": false
+        }
+      ],
+      "IsExclusive": true,
+      "RunOnStartup": true
+    }
+  ]
+}

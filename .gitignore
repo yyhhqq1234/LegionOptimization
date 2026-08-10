@@ -1,0 +1,22 @@
+# Runtime lock files
+*.lock
+
+# ThrottleStop logs
+ThrottleStop/Logs/
+
+# Build artifacts (not needed at runtime)
+*.pdb
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# .NET
+*.nupkg
+*.snupkg
+
+# OS files
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
