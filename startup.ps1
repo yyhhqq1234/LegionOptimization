@@ -27,6 +27,22 @@ if ($battery -and $battery.BatteryStatus -eq 1) {
         powercfg /setdcvalueindex scheme_current sub_processor 75b0ae3f-bce0-45a7-8c89-c9611c25e101 3800
         powercfg /setactive scheme_current
 
+        # Set GPU to iGPU Only on battery (runs as SYSTEM, direct WMI works)
+        # DDS=iGPU + IGPU mode=1 (dGPU disabled) for max battery life
+        try {
+            $gpuM = Get-WmiObject -Namespace root\WMI -Class LENOVO_GAMEZONE_DATA -ErrorAction Stop
+            $ddsP = $gpuM.GetMethodParameters('SetDDSControlOwner')
+            $ddsP.Data = 0
+            $gpuM.InvokeMethod('SetDDSControlOwner', $ddsP, $null) | Out-Null
+            Start-Sleep -Milliseconds 300
+            $igpuP = $gpuM.GetMethodParameters('SetIGPUModeStatus')
+            $igpuP.mode = 1
+            $gpuM.InvokeMethod('SetIGPUModeStatus', $igpuP, $null) | Out-Null
+            "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') [boot] GPU → iGPU Only (battery)" | Out-File $logFile -Append -Encoding UTF8
+        } catch {
+            "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') [boot] GPU switching not available: $($_.Exception.Message)" | Out-File $logFile -Append -Encoding UTF8
+        }
+
         "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') [boot] Quiet.ini copied, Balanced+Efficient Turbo activated" | Out-File $logFile -Append -Encoding UTF8
     }
 } else {

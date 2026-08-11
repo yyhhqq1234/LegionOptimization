@@ -23,6 +23,7 @@ Write-Host "  1. Registry Run key   -> LLT to tray at logon (user)"
 Write-Host "  2. LegionProfile      -> FIVR injector on boot (+30s)"
 Write-Host "  3. ThrottleStop_NoUAC -> TS launcher without UAC"
 Write-Host "  4. LegionUpdate       -> Weekly update (Sun 3AM)"
+Write-Host "  5. LegionGpuSwitch    -> GPU mode switch (via SYSTEM task)"
 Write-Host "============================================================"
 Write-Host ""
 
@@ -107,7 +108,7 @@ if ($LASTEXITCODE -eq 0) {
 
 # === Task 4: LegionUpdate ===
 Write-Host ""
-Write-Host "[4/4] LegionUpdate (weekly update check)..."
+Write-Host "[4/5] LegionUpdate (weekly update check)..."
 
 & schtasks.exe /delete /tn "LegionUpdate" /f 2>$null
 $tr4 = "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scriptDir\check_update.ps1`""
@@ -119,6 +120,24 @@ if ($LASTEXITCODE -eq 0) {
     $luTask.Settings.StopIfGoingOnBatteries = $false
     Set-ScheduledTask -InputObject $luTask | Out-Null
     Write-Host "  [OK] LegionUpdate created (battery allowed)"
+} else {
+    Write-Host "  [FAILED] Exit code: $LASTEXITCODE"
+}
+
+# === Task 5: LegionGpuSwitch ===
+Write-Host ""
+Write-Host "[5/5] LegionGpuSwitch (GPU mode switch via SYSTEM)..."
+
+& schtasks.exe /delete /tn "LegionGpuSwitch" /f 2>$null
+$tr5 = "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scriptDir\switch_gpu.ps1`""
+& schtasks.exe /create /tn "LegionGpuSwitch" /tr $tr5 /sc ONCE /st 00:00 /rl HIGHEST /f
+if ($LASTEXITCODE -eq 0) {
+    # Allow running on battery
+    $gsTask = Get-ScheduledTask -TaskName "LegionGpuSwitch"
+    $gsTask.Settings.DisallowStartIfOnBatteries = $false
+    $gsTask.Settings.StopIfGoingOnBatteries = $false
+    Set-ScheduledTask -InputObject $gsTask | Out-Null
+    Write-Host "  [OK] LegionGpuSwitch created (battery allowed)"
 } else {
     Write-Host "  [FAILED] Exit code: $LASTEXITCODE"
 }
@@ -139,7 +158,7 @@ if ($reg) {
 
 Write-Host ""
 Write-Host "[Scheduled Tasks]"
-@("LegionProfile", "ThrottleStop_NoUAC", "LegionUpdate") | ForEach-Object {
+@("LegionProfile", "ThrottleStop_NoUAC", "LegionUpdate", "LegionGpuSwitch") | ForEach-Object {
     $task = Get-ScheduledTask -TaskName $_ -ErrorAction SilentlyContinue
     if ($task) {
         $action = $task.Actions[0]
