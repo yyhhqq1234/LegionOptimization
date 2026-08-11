@@ -9,17 +9,14 @@ Lenovo Legion laptop Fn+Q power mode CPU tuning automation — applies custom fr
 
 ## Per-Mode Settings
 
-| Mode | Max Freq | Undervolt (Core+P-Cache) | PL1 | GPU Mode |
-|------|----------|--------------------------|-----|----------|
-| Quiet (安静) | 3.8 GHz | -50 mV | 25 W | iGPU Only (集显) |
-| Balance (均衡) | 4.8 GHz | -65 mV | 40 W | Hybrid Auto (自动) |
-| Beast (野兽) | 5.0 GHz | -55 mV | 65 W | dGPU Only (独显) |
-| Extreme (超能) | 5.2 GHz | -45 mV | 65 W | dGPU Only (独显) |
+| Mode | Max Freq | Undervolt (Core+P-Cache) | PL1 |
+|------|----------|--------------------------|-----|
+| Quiet (安静) | 3.8 GHz | -50 mV | 25 W |
+| Balance (均衡) | 4.8 GHz | -65 mV | 40 W |
+| Beast (野兽) | 5.0 GHz | -55 mV | 65 W |
+| Extreme (超能) | 5.2 GHz | -45 mV | 65 W |
 
-GPU mode is switched via two WMI methods in `LENOVO_GAMEZONE_DATA`:
-- `SetIGPUModeStatus(mode=0|1)` — controls dGPU availability (0=Hybrid, 1=iGPU Only)
-- `SetDDSControlOwner(Data=0|1)` — controls display routing (0=iGPU, 1=dGPU MUX)
-GPU switching requires SYSTEM privilege; runs via `LegionGpuSwitch` scheduled task.
+GPU mode (iGPU Only / Hybrid / dGPU Only) is switched manually via NVIDIA App.
 
 FIVR injection is fire-and-forget (ThrottleStop starts → injects MSR → killed after 5s).
 
@@ -36,13 +33,12 @@ Each batch script:
   1. Kill ThrottleStop
   2. Copy profile INI → ThrottleStop.ini
   3. powercfg set CPU frequency cap + power plan
-  4. Write GPU mode to temp file → trigger LegionGpuSwitch task (SYSTEM)
-  5. Launch ThrottleStop (no UAC via scheduled task)
-  6. Wait 5s for FIVR injection, then kill ThrottleStop
+  4. Launch ThrottleStop (no UAC via scheduled task)
+  5. Wait 5s for FIVR injection, then kill ThrottleStop
 
 Boot chain:
-  Logon → LegionLLT task → start_llt.bat → LLT (system tray) + PowerModeWatcher.ps1
-  Logon +30s → LegionProfile task → startup_inject.bat → initial FIVR injection
+  Logon → Registry Run key → start_llt.ps1 → LLT (system tray) + PowerModeWatcher.ps1
+  Logon +30s → LegionProfile task → startup.ps1 → initial FIVR injection
 ```
 
 ## Why a separate WMI watcher for Extreme mode?
@@ -67,12 +63,11 @@ To install elsewhere, run `configure.bat` after setup to update the paths in LLT
 setup_startup.bat
 ```
 
-This creates 5 scheduled tasks:
-- `LegionLLT` — Launches LLT + watcher at logon
+This creates 4 scheduled tasks:
 - `LegionProfile` — Initial FIVR injection at logon (+30s delay)
 - `ThrottleStop_NoUAC` — Lets batch scripts launch ThrottleStop without UAC prompts
-- `LegionGpuSwitch` — GPU mode switching via WMI (SYSTEM privilege)
 - `LegionUpdate` — Weekly LLT auto-update check (Sunday 3:00 AM)
+- Registry Run key — Launches LLT + watcher at logon
 
 ### 3. Import automation into LLT
 1. Open Lenovo Legion Toolkit
@@ -119,12 +114,11 @@ LLT updates are from the official installer — they don't touch `%LOCALAPPDATA%
 
 | File | Purpose |
 |------|---------|
-| `quiet.bat` / `balance.bat` / `beast.bat` / `custom.bat` | Per-mode switch scripts (CPU + GPU) |
-| `switch_gpu.ps1` | GPU mode switch (runs as SYSTEM via scheduled task) |
+| `quiet.bat` / `balance.bat` / `beast.bat` / `custom.bat` | Per-mode switch scripts (CPU tuning) |
 | `PowerModeWatcher.ps1` | WMI watcher for Extreme/超能 mode |
 | `check_update.ps1` | Weekly LLT auto-update checker |
 | `start_llt.ps1` | LLT + watcher launcher |
-| `startup.ps1` | Boot-time FIVR injection + GPU mode |
+| `startup.ps1` | Boot-time FIVR injection |
 | `setup_startup.ps1` | One-time scheduled task creation (run as admin) |
 | `configure.bat` | Update automation.json paths for current install |
 | `automation.template.json` | LLT automation import template |
@@ -133,6 +127,7 @@ LLT updates are from the official installer — they don't touch `%LOCALAPPDATA%
 
 ## Notes
 
+- GPU mode (iGPU Only / Hybrid / dGPU Only) is managed manually via NVIDIA App — not automated
 - FIVR MSR values persist after ThrottleStop exits but are lost on reboot
 - `SpeedShift=0` in ThrottleStop — frequency control is via Windows power plan (`powercfg`)
 - LLT must be closed before running `setup_startup.bat` (it restarts LLT on next logon)

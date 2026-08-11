@@ -36,12 +36,7 @@ powercfg /setdcvalueindex scheme_current sub_processor 75b0ae3f-bce0-45a7-8c89-c
 powercfg /setactive scheme_current
 echo [beast] High Perf plan + Aggressive turbo, Max=5.0GHz (AC+DC)
 
-:: Step 4: Set GPU to dGPU Only (RTX 5060 dedicated) via SYSTEM task
-echo 1 > "%SCRIPT_DIR%gpu_mode.tmp"
-schtasks /run /tn "LegionGpuSwitch" >nul 2>&1
-echo [beast] GPU → dGPU Only
-
-:: Step 5: Start TS, verify it launched (3s), wait for FIVR (2s)
+:: Step 4: Start TS, verify it launched (3s), wait for FIVR (2s)
 schtasks /run /tn "ThrottleStop_NoUAC" >nul 2>&1
 timeout /t 3 /nobreak >nul
 tasklist /fi "imagename eq ThrottleStop.exe" 2>nul | find /i "ThrottleStop" >nul
@@ -52,7 +47,7 @@ if %errorlevel% equ 0 (
     echo [%date% %time%] [beast] TS FAILED to start! >> "%LOG_FILE%"
 )
 
-:: Step 6: Kill TS
+:: Step 5: Kill TS
 taskkill /f /t /im ThrottleStop.exe >nul 2>&1
 echo [%date% %time%] [beast] TS killed, done >> "%LOG_FILE%"
 
