@@ -14,6 +14,9 @@ try {
     exit 0
 }
 
+# PID file: for reliable stop/start via enable/disable (WMI CommandLine may be invisible to non-admin)
+try { $pid | Out-File "$scriptDir\watcher.pid" -Encoding ASCII -Force } catch {}
+
 function Write-Log($msg) {
     $line = "$(Get-Date -Format 'HH:mm:ss.fff') $msg"
     $retry = 0
