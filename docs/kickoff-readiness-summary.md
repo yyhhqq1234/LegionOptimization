@@ -93,3 +93,14 @@
 | 本汇总 | `docs/kickoff-readiness-summary.md` | v1.0 |
 
 *— spec-architect，t5 交付；只汇总未写代码 —*
+
+---
+
+## 6. 清理与决策追记（2026-09-15，用户逐项确认）
+
+- Legacy 实现清零并提交 `6111aef`，B2 基线冻结于 tag `legion-legacy-b2`（已推远端）；P0-1/P0-2/P0-3 关闭，规格升 v0.1.1。
+- 4 个 Disabled 尸体任务已删（LegionProfile / LegionUpdate / LegionGpuSwitch / ThrottleStop_NoUAC）。
+- `watcher.lock` 因 Session-0 未知进程持有暂留（gitignored），重启后删；新实现禁用旧锁名（见规格§8）。
+- **外部参照工具保留**：`D:\Intel降压定频 .exe`（第三方「通用 Intel CPU 控制中心」v2.7.0.0）+ `D:\undervolt_config.json`
+  （-50mV / PL1 120W / PL2 168W / P4.8G / E4.3G）**留作手动对比基线**；其开机任务损坏（路径空格截断，0x80070002）实际未运行。
+  E2 须将其登记为外部 MSR 写入者并纳入互斥设计；其 -50mV 可与 G1 Quiet 互为参照。
