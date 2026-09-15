@@ -6,6 +6,12 @@ watcher_log.txt
 # Runtime lock files
 *.lock
 
+# Runtime pid files
+*.pid
+
+# Agent harness state (never commit)
+.agent-teams/
+
 # ThrottleStop runtime files (overwritten on every mode switch)
 ThrottleStop/ThrottleStop.ini
 ThrottleStop/Logs/
