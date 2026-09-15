@@ -16,7 +16,7 @@
 | P7 | `PHASE-07-canary-thesis.md` | 金丝雀放量 + SLO + 论文答辩收官 | W14–W16 | 24 格全绿 + 论文初稿 |
 
 上游契约（各阶段通用，不重复写）：
-- 规格 `specs/SYSTEM_SPEC_DRAFT_v0.1.md` v0.1.1（W0–W7 / DC 正交 / G4 95℃ / TJMax 运行时探测）
+- 规格 `specs/SYSTEM_SPEC_DRAFT_v1.0.md` v1.0 冻结（W0–W7 / DC 正交 / G4 95℃ / TJMax 运行时探测）
 - 围栏 `docs/safety-fence-spec.md` v0.1（影子≥8h / 金丝雀48h / 自动回滚）
 - 验证矩阵 `docs/thesis-proposal-outline.md` §3（V01–V24）+ §3.1 正交视图
 - 基线：B0 原厂 / B1 LLT 官方 / B2 `legion-legacy-b2` tag；外部参照：`D:\Intel降压定频 .exe`（只读参照，不联动）

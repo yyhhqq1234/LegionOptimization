@@ -86,8 +86,8 @@
 
 | 交付物 | 路径/位置 | 版本 |
 |--------|-----------|------|
-| 系统规格草案 | `specs/SYSTEM_SPEC_DRAFT_v0.1.md` | v0.1（待 v0.2 修 P0-3/P1-1/P1-2） |
-| 开题大纲与验证矩阵 | `docs/thesis-proposal-outline.md` | v0.1（待 v0.2 修 P0-1/P0-2） |
+| 系统规格 | `specs/SYSTEM_SPEC_DRAFT_v1.0.md` | **v1.0 冻结**（P0 已验收：P0-3/P1-1/P1-2 落盘） |
+| 开题大纲与验证矩阵 | `docs/thesis-proposal-outline.md` | v0.1 + P0 补丁（P0-1/P0-2 关闭，G5→DC正交，正交视图 30 格） |
 | 环境盘点 | t3 dependency 结果（建议落盘 `docs/env-inventory.md`，动工时补） | — |
 | 安全围栏规格 | `docs/safety-fence-spec.md` | v0.1（阈值初始值，影子校准） |
 | 本汇总 | `docs/kickoff-readiness-summary.md` | v1.0 |

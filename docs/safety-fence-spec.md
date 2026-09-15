@@ -1,4 +1,4 @@
-# 安全围栏规格（Safety Fence Spec）— t4 / p-safety
+# 安全围栏规格（Safety Fence Spec）— t4 / p-safety — **v1.0 冻结（P0 E1 已验收）**
 
 > 性质：纯规格，不含代码。本文是 Legion 重构（RL 功耗控制器）的安全围栏契约。
 > 上游接口：t1（HAL 分层 / State48 / Action7 / Reward 权重 / 5 档 8 子模包络）。

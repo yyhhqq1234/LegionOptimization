@@ -15,7 +15,7 @@
 |------|------|------|
 | 1 | 本文件 | 工作协议 |
 | 2 | `plans/README.md` + 当前阶段 `plans/PHASE-0x-*.md` | 执行顺序、前置依赖、验收 checklist |
-| 3 | `specs/SYSTEM_SPEC_DRAFT_v0.1.md` | HAL 分层 / State48 / Action7 / Reward / 包络 |
+| 3 | `specs/SYSTEM_SPEC_DRAFT_v1.0.md` | HAL 分层 / State48 / Action7 / Reward / 包络 |
 | 4 | `docs/safety-fence-spec.md` | 门禁（影子/金丝雀/回滚/SLO），硬约束 |
 | 5 | `docs/thesis-proposal-outline.md` | V01–V24 验证矩阵（每项工作必须能映射到某格） |
 | 6 | `docs/kickoff-readiness-summary.md` §6 | 已确认决策（删了什么、留了什么、为什么） |

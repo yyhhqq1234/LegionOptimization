@@ -1,10 +1,10 @@
-# 系统规格锁定草案 v0.1（t1 / p-spec）
+# 系统规格锁定 v1.0（t1 / p-spec，P0 已验收）
 
 > 性质：规格内容，不写代码。只读基于已锁定讨论（现网 4 档静态胶水层 + 只读分析 t1–t5 结论）。
 > 现网基线：Y7000 2025 IAX10 / U7 255HX / RTX 5060；Quiet 3.8GHz/-50mV/25W，
 > Balance 4.8GHz/-65mV/40W，Beast 5.0GHz/-55mV/65W，Extreme 5.2GHz/-45mV/65W；
 > FIVR fire-and-forget 五步；Fn+Q 双触发链；Boot 双轨；Extreme 双触发竞态等 13+10 项 findings 为本规格输入。
-> P0-1已应用（v0.1.1）：负载子模 W0–W7 改称 **W0–W7**（workload），系统模块保留 M1–M8；P0-2已应用：G0–G4 为唯一档维度，DC 为正交维度（与 AC 同优先级）。
+> P0-1已应用：负载子模 m0–m7 改称 **W0–W7**（workload），系统模块保留 M1–M8；P0-2已应用：G0–G4 为唯一档维度，DC 为正交维度（与 AC 同优先级）。E1 已验收，见 `plans/PHASE-00-e0e1-review.md`。
 
 ---
 
@@ -176,13 +176,13 @@
 
 ---
 
-## 5. Reward 权重（v0.1 锁定）
+## 5. Reward 权重（v1.0 锁定）
 
 ### 5.1 主公式（1s 步奖励）
 
 ```
 R = w_perf * P_norm  - w_power * W_norm  - w_temp * T_viol
-    - w_smooth * S_viol - w_noise * N_norm + w_batt * B_save
+    - w_smooth * S_viol - w_noise * N_norm - w_burst * B_viol + w_batt * B_save
 ```
 
 - `P_norm`：子模相关性能分（§5.2），0–1。
@@ -205,6 +205,7 @@ R = w_perf * P_norm  - w_power * W_norm  - w_temp * T_viol
 | W6 Create 渲染/转码 | 0.50 | 0.15 | 0.20 | 0.05 | 0.10 | 吞吐+温度并重 |
 | W7 Stress 压测 | 0.20 | 0.10 | 0.50 | 0.05 | 0.15 | 温度约束主导 |
 
+- `B_viol`：burst 违规计数（超 Tmax 未降回 / 空桶请求，按步 clip 0–2；t4 §3.3 语义）；`w_burst = 0.5` 初值（与 shield 附加罚同量级，影子期调参；P1-2 增补）。
 - 拔电附加：`w_batt = 0.30`，`R += w_batt * B_save`（仅 ac_online=0）。
 - `P_norm` 定义：游戏类子模用 `clip(fps/目标帧, 0, 1)`（目标帧：W4=120，W5=90，以 1% Low 打 7 折混合）；非游戏用 `clip(1 - c0_residency_idle_excess, 0, 1)`，即“不堆空转功耗前提下的响应性”（细化由 thesis 验证矩阵量化）。
 - 安全事件（shield 触发步）：该步 `R -= 1.0` 附加罚（记 `SHIELD_PENALTY`），防止策略学出“贴线蹭 shield”。
@@ -212,7 +213,7 @@ R = w_perf * P_norm  - w_power * W_norm  - w_temp * T_viol
 ### 5.3 回合计分（供开题验证矩阵用）
 
 `Return = mean(R) - 0.5 * std(R) - 2.0 * shield_rate - 1.0 * clamp_rate`，
-其中 shield_rate / clamp_rate 为回合内步占比。要求：相对静态基线（现网 4 档固定值）Return 提升 ≥10% 且 shield_rate 不上升（t2 验证矩阵入口）。
+其中 shield_rate / clamp_rate 为回合内步占比。要求：相对 B2 基线（`legion-legacy-b2` tag）Return 提升 ≥10% 且 shield_rate 不上升（t2 验证矩阵入口）。
 
 ---
 
@@ -259,7 +260,10 @@ R = w_perf * P_norm  - w_power * W_norm  - w_temp * T_viol
 
 ### 6.4 Burst 规格（短时加速预算桶）
 
-- 模型：token bucket。容量 `C = 120 W·s`（例：65W 基线上 +30W 可撑 4s；+15W 可撑 8s）。 refill 速率 `r = 8 W·s/s`（仅当 `temp_headroom > 8K` 且 `shield_active=0` 时回充）。
+- 模型：token bucket，能量单位，持续包络以上部分按实际功耗积分扣费。
+  **本草案通用初值（C=120 W·s / r=8 W·s/s）作废（P1-1），以 t4 分档表为准**：
+  Quiet 0.15kJ / Balance 0.70kJ / Beast 0.60kJ / Extreme 0.675kJ（见围栏 §3.2）。
+  refill 仅当 `temp_headroom > 8K` 且 `shield_active=0` 时回充。
 - 触发：仅 W3/W5/W6 且 `submode_conf ≥ 0.6` 且 `burst_tokens > 0.2` 时允许 `a3 > a2`。
 - 上限：`a3 ≤ min(档位PL2上限, a2 + 30W)`；单次 burst ≤10s，结束后强制冷却 20s（期间 `a3 = a2`）。
 - 熔断：burst 期间 `cpu_temp_pkg ≥ ceiling - 3K` 立即清零输出（`a3 = a2`，桶不停充）；桶空时 L3 否决码 `BURST_EMPTY`。
@@ -278,7 +282,7 @@ R = w_perf * P_norm  - w_power * W_norm  - w_temp * T_viol
 
 ## 8. 版本与确认事项
 
-- 版本：v0.1.1（P0-1/P0-2/P0-3 已落盘）；HAL_MAP v0.1；Reward v0.1。
+- 版本：**v1.0 冻结**（P0 E1 已验收；P0-1/P0-2/P0-3/P1-1/P1-2 已落盘）；HAL_MAP v1.0；Reward v1.0。
 - **TJMax（P0-3 关联输入，用户确认）**：A机 255HX **TJMax=105°C**；B机 14900HX 未知，E2 开机探测为准。
   重构实现要求：**禁止硬编码温度阈值**——HAL 启动时读 MSR `IA32_TEMPERATURE_TARGET (0x1A2[22:16])` 得 TJMax，
   t4 四级线按 `WARN=TJMax-15 / L1=TJMax-10 / L2=TJMax-7 / L3=TJMax-5` 相对偏移生成；
