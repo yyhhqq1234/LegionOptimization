@@ -14,7 +14,7 @@
 | 系统 | Win10 Pro 显示名 / HAL 10.0.22621.2506（输出原文，不推断） |
 | PowerShell | 5.1.22621.6060 |
 | 电源方案 | 现用“高性能”；另有平衡 / 高性能 / 节能 / GamePP |
-| WMI | GAMEZONE 类齐备（含双事件类）；mode 值 `{1, 2, 3, 224}`，Extreme = 224 确认 |
+| WMI | GAMEZONE 类齐备（含双事件类）；mode 映射：1 = Quiet，2 = Balance，3 = Beast，224 = Extreme |
 | Python | 3.12.10；torch 2.11.0+cu128；numpy 1.26.4；psutil 7.2.2；onnxruntime 1.26.0（仅 CPU/Azure EP） |
 
 ## 2. TJMax 与 MSR 通道（A 机）
@@ -39,11 +39,11 @@ M8 导出验证 V22–V24 记缺失）/ 无 lightgbm（P4 前补，owner：P4）
   load 段 370 条（util 均值 53.7% / 峰值 99%，66.9°C / 峰值 81°C，63.6W / 峰值
   112.6W）。四字段可用；`power.limit` 持续 `[N/A]`，定为驱动 / EC 限制（非查询姿势问题）。
 - `wmi_trace_A.csv`：已捕获 8 事件（本地 `artifacts/`，gitignore 不进仓）。
-  双类成对（SMART_FAN_MODE + THERMAL_MODE），mode 值 `{1, 2, 3, 224}` 四档齐全，
-  其中 **Extreme = 224 确认**；1/2/3 映射待第二轮补采时按循环顺序核对。
-  过程记录：非提权订阅实际有效（此前“0 事件”是心跳计数 bug 看错了文件，
-  以文件为准；提权轮询方案作废）；用户已按两轮，捕获到一轮（第二轮在我提前
-  kill 订阅时丢失），待 1 分钟补采第二轮。
+  双类成对（SMART_FAN_MODE + THERMAL_MODE），mode 值 `{1, 2, 3, 224}` 四档齐全。
+  映射已定（两轮独立捕获同为 224→1→2→3 循环序，用户上报 OSD 顺序 Beast→Extreme→
+  Quiet→Balance 与之同构，仅起点差一位）：**1 = Quiet，2 = Balance，3 = Beast，
+  224 = Extreme**。第二轮 8 事件一次收齐（首轮丢失系我提前 kill，本轮多留了
+  flush 时间）。本项关闭。
 
 ## 5. B 机部分：TBD（暂缓）
 
