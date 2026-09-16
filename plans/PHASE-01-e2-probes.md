@@ -1,5 +1,8 @@
 # PHASE-01：E2 环境探针与工具链（只读 ops，W1–W2）
 
+> 执行顺序调整（2026-09-16，用户指令）：B 机侧暂缓为待完成项，先闭环 A 机侧。
+> B 机上线后恢复执行 B 项（见 §4 标注）。调整不改变验收口径，只改执行顺序。
+
 ## 1. 阶段目标
 
 冻结 B 机型号，完成双机只读探针（WMI 事件 / FIVR 兼容 / TJMax / GPU 传感基线），
@@ -42,11 +45,11 @@
 
 ## 4. 阶段验收方法
 
-- [ ] `docs/env-inventory.md` 存在：A/B 档案、TJMax 双机实测值、UV 锁状态、工具链缺口声明
-- [ ] `artifacts/wmi_trace_{A,B}.csv` 存在且覆盖 4 档事件；B 机差异有 R4 备注
-- [ ] `requirements.txt` 存在且 `pip install -r requirements.txt --dry-run`（或等价校验）通过
-- [ ] P1-3（B 机抽样比：M1/M3/M5/M7 必复、其余≥50%）写入 B 列排期表；P1-5 缺口有owner与顺延标记
-- [ ] 验收：B 列执行资格解锁；MSR 写操作零发生（审计：本阶段无任何写入类命令记录）
+- [ ] `docs/env-inventory.md` 存在：A 机档案先行（B 机部分 TBD）；TJMax/UV 锁分机记录；工具链缺口声明
+- [ ] `artifacts/wmi_trace_A.csv`（A 机先行）/ `wmi_trace_B.csv`（暂缓待 B 机）存在且覆盖 4 档事件；B 机差异 R4 备注（暂缓）
+- [ ] `requirements.txt` 存在且 `pip install -r requirements.txt --dry-run`（或等价校验）通过（A 机先行，无 B 机依赖）
+- [ ] P1-3 抽样比排期表先写（A 机先行，B 列执行待 B 机）；P1-5 缺口有 owner 与顺延标记（A 机先行）
+- [ ] 验收：B 列执行资格解锁（暂缓待 B 机）；MSR 写操作零发生（全程有效：本阶段无任何写入类命令记录）
 
 ## 5. 产物清单
 
