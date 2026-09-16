@@ -17,13 +17,15 @@
 | WMI | GAMEZONE 类齐备（含双事件类）；mode 映射：1 = Quiet，2 = Balance，3 = Beast，224 = Extreme |
 | Python | 3.12.10；torch 2.11.0+cu128；numpy 1.26.4；psutil 7.2.2；onnxruntime 1.26.0（仅 CPU/Azure EP） |
 
-## 2. TJMax 与 MSR 通道（A 机）
+## 2. TJMax 与 MSR 通道（A 机）——已关闭（2026-09-16）
 
-- 用户确认值：105°C；MSR `0x1A2` 复核待探针通道。
-- 通道现状：发现残留注册 `WinRing0_1_2_0`（DEMAND_START，已停止），
-  文件 `%TEMP%\7zEAFF6774\WinRing0x64.sys` 存在，签名 Valid
- （2018 交叉签名）。Win11 下能否加载未知——**未启动、未加载、未评估加载**，
-  只读登记为候选通道；是否启用走 P1 Step 1-3 签名与回滚评估，不硬上。
+- MSR `0x1A2` 实测：EAX = `0x02690000`，TJMax = 105°C，与用户确认值一致。
+  交叉验证 MSR `0x19C`：valid，readout = 51 → package ~54°C（合理 idle 值）。
+- 通道：残留 `WinRing0_1_2_0`（MuMu 释放，SHA256 `D5BCA2…BE4D`，
+  签名 Valid / 2018 交叉签名）经用户批准一次性加载 → 只读 → `sc stop`，
+  现已恢复 STOPPED。全程零 MSR 写入（探针仅 READ_MSR，见 `probe/msr_read.py`）。
+- 结论：A 机 TJMax = 105 由“确认值”升级为“实测值”；该驱动不常驻，
+  不作为正式通道（P3 正式 MSR 通道另行评估签名驱动）。
 - B 机：TBD（`0x1A2` 实测值即 14900HX 答案）。
 
 ## 3. 工具链缺口声明（P1-5，A 机）
