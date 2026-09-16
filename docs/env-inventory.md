@@ -32,11 +32,14 @@
 M8 导出验证 V22–V24 记缺失）/ 无 lightgbm（P4 前补，owner：P4）/
 无 nvcc（不阻塞）。详见 `requirements.txt` 注释。
 
-## 4. 待跑项（A 机，需用户配合触发）
+## 4. 探针结论（A 机）
 
-- `wmi_trace_A.csv`：订阅已验类名，待 Fn+Q 循环两轮抓包。
-- `gpu_baseline_A.csv`：待 10 分钟 1Hz（待机 5min + 短负载 5min），
-  兼复核 `power.limit` N/A 原因。
+- `gpu_baseline_A.csv`：已跑通（2026-09-16，775 samples / 780s，本地 `artifacts/`，
+  gitignore 不进仓）。idle 段 405 条（util 4.7%，49°C，15W，含开头 Fn+Q 扰动）；
+  load 段 370 条（util 均值 53.7% / 峰值 99%，66.9°C / 峰值 81°C，63.6W / 峰值
+  112.6W）。四字段可用；`power.limit` 持续 `[N/A]`，定为驱动 / EC 限制（非查询姿势问题）。
+- `wmi_trace_A.csv`：事件订阅机制 0 触发（非提权会话，DATA 类拒绝访问已佐证），
+  已切提权轮询方案，待用户回传提权终端 `LENOVO_GAMEZONE_DATA` 输出后抓包。
 
 ## 5. B 机部分：TBD（暂缓）
 
