@@ -100,8 +100,18 @@ Stop-Job $job; Remove-Job $job
 
 回传 A 机：`bringup_B.txt` + `wmi_trace_B.csv` + `gpu_baseline_B.csv` +
 BIOS 照片 + MSR 项结论（实测值 / 缺失顺延二选一）。
-A 机落盘 `docs/env-inventory.md` 后，P1 §4 验收：
-B 列执行资格解锁；本阶段审计必须显示 MSR 写操作零发生。
+
+回传通道（三选一，按顺手程度）：U 盘拷到 A 机 `artifacts/`；
+局域网共享拖过去；小文件直接发对话里。**不推荐在 B 机装 git 推仓**：
+CSV 类产物本来就被 gitignore（只留本地，不同机器各存各的），进仓的只是
+合订后的结论；B 机配 git 是 P5 常驻任务时的事，现在不用。
+
+唯一落盘口是 A 机：文件到 `artifacts/` 后报我，我按清单验
+（非空、有表头、WMI 四档齐、时间戳合理、序列号已打码）再合订进
+`docs/env-inventory.md` B 机部分，然后 commit + push。
+照片类大二进制不进仓，只留本地，结论记成文字。
+A 机落盘后，P1 §4 验收：B 列执行资格解锁；
+本阶段审计必须显示 MSR 写操作零发生。
 
 ## 5. 风险与降级（不判失败项）
 
