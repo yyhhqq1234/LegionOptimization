@@ -40,6 +40,7 @@ $RECYCLE.BIN/
 __pycache__/
 *.pyc
 .pytest_cache/
+.venv/
 
 # P3: artifacts 大文件忽略，只留 README 与小样例
 artifacts/*
