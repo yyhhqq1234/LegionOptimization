@@ -1,0 +1,8 @@
+# 静态包络表 v1.0（随 specs v1.0 冻结；变更走影子/金丝雀）。
+# 档位命名以 specs 为准；DC 为正交维度，见 fence §4，不在档位轴上。
+envelope_ver: "1.0"
+gears:
+  Quiet: {freq_ghz: 3.8, pl1_w: 25}
+  Balance: {freq_ghz: 4.8, pl1_w: 40}
+  Beast: {freq_ghz: 5.0, pl1_w: 65}
+  Extreme: {freq_ghz: 5.2, pl1_w: 65}

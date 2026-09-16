@@ -1,0 +1,6 @@
+# P3 脚手架最小集（本机实测版本 pin）。
+# P1 Step 1-5 将补齐 torch / psutil 等并做安装校验；torch cu128 届时写法：
+# --index-url https://download.pytorch.org/whl/cu128
+# torch==2.11.0+cu128
+pytest==9.0.3
+pyyaml==6.0.2

@@ -1,0 +1,7 @@
+"""L0：Lenovo WMI 事件订阅探针（P1 Step 1-2 实现，此处仅冻结事件名常量）。"""
+
+FAN_MODE_EVENT = "LENOVO_GAMEZONE_SMART_FAN_MODE_EVENT"
+THERMAL_MODE_EVENT = "LENOVO_GAMEZONE_THERMAL_MODE_EVENT"
+
+# Fn+Q 循环两轮抓包，记录每档 mode 值；B 机差异记为 R4 输入。
+PROBE_ROUNDS = 2

@@ -1,0 +1,16 @@
+# 围栏阈值表 v1.0（随 fence-spec v1.0 冻结；数值源自围栏 §1–§4）。
+# 温度为 Arrow Lake-HX 基准；运行时一律相对 TJMax 偏移，禁止硬编码。
+fence_ver: "1.0"
+temperature:
+  warn_cpu: 90
+  l1_cpu: 95
+  l2_cpu: 98
+  l3_cpu: 100
+  warn_gpu: 80
+  l1_gpu: 85
+  l2_gpu: 88
+  l3_gpu: 90
+  dc_offset: -2
+debounce_n: 3
+hold_s: {temperature: 30, fluency: 10}
+arbitration: [temperature, acdc, power_cap, fluency, burst]
