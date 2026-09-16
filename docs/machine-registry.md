@@ -16,8 +16,8 @@ P1-3 B 列排期）。若将来加机器时再定规则，命名与矩阵必然�
 
 | 槽位 | 身份 | 状态 | 档案 |
 |------|------|------|------|
-| A | 基准机 + 主力机（255HX + 5060） | active | `docs/a-machine-profile.md` |
-| B | 验证机 + 迁移目标（14900HX + 5060） | bringup | 上线清单见 `docs/b-machine-env-requirements.md`；档案待 P1 进 `env-inventory.md` |
+| A | 基准机 + 主力开发机（255HX + 5060） | active | `docs/a-machine-profile.md` |
+| B | 副开发机 + 验证机 + 迁移目标（14900HX + 5060） | active | 上线清单见 `docs/b-machine-env-requirements.md`；档案进 `env-inventory.md`（P1 合订，待补不阻塞副开发任务） |
 | C | 未定 | **reserved** | 见 §4（出现时填） |
 | D | 未定 | **reserved** | 见 §4（出现时填） |
 
@@ -60,3 +60,17 @@ CPU 型号 / 步进、BIOS 版本、GPU 型号 / 驱动版本、EC 与散热规�
 - 不建 `configs/machines/` 机型覆盖文件（无第二实测机型，建了也是编数字）。
 - 不给 `src/` 加 machine_id 抽象（无硬编码需要治理）。
 - 不给 C / D 编任何“预设画像”（架构、型号一律未知，不前置假设）。
+
+## 7. 双机开发分工（A 主力 / B 副开发，2026-09-16 生效）
+
+- A 机：主力开发机。唯一落盘口（合订 `env-inventory.md` + 打 tag + 最终 push 确认）；
+  主场：P2 E3 时序 + LKG、P3 HAL 核心（L2 互斥 / L3 围栏）、P4 训练源域 + BO、
+  P6 RL 主场、P7 48h 金丝雀主场。
+- B 机：副开发机（兼验证 + 迁移目标）。允许完整 `git clone` + 按 `requirements.txt`
+  配 Python/torch（见 `docs/b-machine-env-requirements.md` §0）；
+  适合：P1 E2 B 侧探针执行、P3 非核心模块（M1 GPU 传感复核 / M7 文档 / 单测分担）、
+  P4 `D_safe_B` 采集、P5 迁移实验执行侧、P7 24h 交叉、复现验证与文档。
+  不适合：LKG / tag 独占操作、G4 真实下发首发（永远 A 机先行，B 机只做交叉复测）。
+- 协同：各自领独立任务；动同一文件先通气；每次 push 前 `git pull --rebase`，
+  禁 force-push（AGENTS.md 铁律 9）；私有产物（实测 CSV/log/照片/secrets）走
+  `artifacts/` + `.gitignore`，永不进仓（AGENTS.md 铁律 10，CLAUDE.md §7）。

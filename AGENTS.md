@@ -37,6 +37,13 @@
 8. **诚实日志**：失败必须显式失败（R3 教训：禁止“记 done 实失败”）；验证产物缺失 = 该格“未执行”，不许补签。
 9. **Git**：Conventional Commits（feat/fix/refactor/docs/chore/test）；门禁通过打 `tag phase-XX-done`；
    允许 push 到 `origin master`（既定流程）；**禁止 force-push 与改写已公开历史**。
+10. **本地私有即 ignore**：在仓内新增任何本地私有内容（实测 CSV/log/照片、个人路径、secrets、临时副本、
+    `*.local.*`/`private/` 类文件）后，必须立即确认 `.gitignore` 已覆盖、`git status --porcelain` 无私有文件
+    后才能 commit；`artifacts/` 实测大文件与照片类大二进制永不进仓（只留 README/小样例，结论以文字合订）。
+11. **双机分工**：A 机 = 主力开发机（基准+训练源+影子/金丝雀主场+唯一落盘口）；B 机 = **副开发机**
+    （验证+迁移目标，可分担独立任务）。B 机允许完整 clone + 按 `requirements.txt` 配 Python/torch，
+    允许 commit/push（先 `git pull --rebase`，同铁律 9 禁 force-push）；领活见 `docs/machine-registry.md` §7，
+    动同一文件先通气。
 
 ## 3. 架构速览（HAL L0–L4 + 双侧车，细则见规格）
 

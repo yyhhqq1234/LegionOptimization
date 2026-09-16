@@ -46,3 +46,9 @@ __pycache__/
 artifacts/*
 !artifacts/README.md
 !artifacts/samples/
+
+# 本地私有内容（AGENTS.md 铁律 10：新增私有内容必须即时补 ignore）
+*.local.*
+*.private.*
+private/
+local-private/

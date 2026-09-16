@@ -1,18 +1,19 @@
-# B 机上线环境需求（P1 E2 前置）
+# B 机（副开发机）上线环境需求（P1 E2 前置 + 副开发前置）
 
 > 状态：待执行 | 时间盒：B 机 1–2 天 | 上游：`plans/PHASE-01-e2-probes.md`
 > 产物去向：`docs/env-inventory.md`（A 机 t3 结论 + B 机档案二合一）
-> 铁律映射：全程 dry-run；门禁通过前零真实写入；路径禁空格禁中文。
+> 铁律映射：全程 dry-run；门禁通过前零真实写入；路径禁空格禁中文；
+> 本地私有即 ignore（AGENTS.md 铁律 10）；分工见 `docs/machine-registry.md` §7。
 
 ## 0. 结论先行
 
-1. **不需要把项目完整部署到 B 机**。P1 E2 是只读探针，B 机侧只需执行
-   §2 的命令清单（建档 + WMI 抓包 + GPU 基线），探针脚本用 U 盘 / zip
-   拷贝或照抄命令执行即可；`git clone` 整仓可选（为保证脚本版本一致，
-   推荐但非强制）。
-2. **B 机暂不需要 Python / torch 环境**。`requirements.txt` 在 A 机生成
-   （P1 Step 1-5）；B 机配完整 Python 环境是 P5（跨机训练）的事，
-   届时按 `requirements.txt` 实测 pin 来（Python 3.12.10 / torch 2.11.0+cu128）。
+1. **B 机身份：副开发机**（兼验证机 + 迁移目标，分工见 `docs/machine-registry.md` §7）。
+   P1 E2 阶段仍按只读探针执行（§2 清单，用 U 盘 / zip 拷脚本或照抄命令即可）；
+   但为承担副开发任务，B 机**需要完整 `git clone` 整仓**（保证脚本版本一致，
+   执行前 `git pull` 对齐）。
+2. **B 机需要 Python / torch 环境**（副开发前置）。`requirements.txt` 在 A 机生成
+   （P1 Step 1-5）后，B 机按其 pin 安装（Python 3.12.10 / torch 2.11.0+cu128）；
+   P1 E2 只读探针本身不依赖该环境，可先探针后配环境，不阻塞。
 3. **全程零写入**：禁 MSR 写、禁 powercfg 写、禁 BIOS 改动、禁装未知来源驱动。
    MSR 读探针若缺签名驱动，记缺失顺延 P3，不硬装（见 §2.3）。
 
@@ -102,10 +103,11 @@ Stop-Job $job; Remove-Job $job
 BIOS 照片 + MSR 项结论（实测值 / 缺失顺延二选一）。
 
 回传通道（三选一，按顺手程度）：U 盘拷到 A 机 `artifacts/`；
-局域网共享拖过去；小文件直接发对话里。B 机已 clone 的纪律：
-允许的只有 `git pull`（跑脚本前对齐版本）+ 只读执行；
-**B 机不 commit、不 push**——CSV 类产物本来就被 gitignore，
-进仓的只是合订后的结论；`git status` 应保持干净。
+局域网共享拖过去；小文件直接发对话里。B 机 git 纪律（副开发机）：
+允许完整开发（独立模块 / 复测 / 文档，见 `docs/machine-registry.md` §7），
+允许 commit + push 到 `origin master`（先 `git pull --rebase`，禁 force-push）；
+CSV / log / 照片类私有产物本来就被 gitignore，进仓的只是合订后的结论；
+每次 commit 前必须 `git status --porcelain` 确认无私有文件（AGENTS.md 铁律 10）。
 
 唯一落盘口是 A 机：文件到 `artifacts/` 后报我，我按清单验
 （非空、有表头、WMI 四档齐、时间戳合理、序列号已打码）再合订进
