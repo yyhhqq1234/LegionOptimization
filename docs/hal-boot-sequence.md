@@ -48,7 +48,12 @@ t0+5min ──→ s41=0，正常调度
   不硬闯（canary 连续 3 次失败回滚规则的开机期映射）。
 - L2 / L3 跳闸：60s 内切 LKG（静态 Quiet 等效），冻结版本（围栏 §5.3）。
 
-## 5. 待 Step 2-2 实测标定
+## 5. Step 2-2 实测标定（2026-09-22，A机，2轮）
 
-登录→服务就绪耗时、首次有效采样时刻、首个事务落地时刻、错峰 ≥30s 复核、
-开机期传感器 stale 率。标定值回填本文件 §2 / §3，不另起文档。
+> 证据：`docs/p2-e3-drill-report.md` §1；commit ecbd6cb。
+
+- 轮1：T0 12:39:29 → T1 12:44:28.266（299s），方案高性能，boot_phase=1内 PASS
+- 轮2：T0 12:46:43 → T1 12:50:05.355（202s），方案高性能，boot_phase=1内 PASS
+- 旧链：计划任务无Throttle*/Legion*，HKCU Run无Legion/Throttle → 4任务无、Run键无
+- T1错峰≥30s：P3前无落盘事务（铁律4禁真实写）→ 无burst/UV，PASS；S3 stale率待P3补
+- LKG只读2/2 <60s（worktree0.1s+读回0.08s×2），live落盘待补（PHASE-02 §6降级，不判失败）
