@@ -1,0 +1,22 @@
+{
+  "synthetic": true,
+  "rows": 2000,
+  "device": "cuda",
+  "mlp_val_mse": 0.08135942369699478,
+  "rmse": [
+    3.2247750759124756,
+    2.8917012214660645,
+    1.7332444190979004
+  ],
+  "mae": [
+    2.5605227947235107,
+    2.1844918727874756,
+    1.3879507780075073
+  ],
+  "kendall_tau": 0.8160804020100503,
+  "lightgbm": "MISSING (owner P4 to pip install before baseline; MLP/Ensemble used)",
+  "export": "torchscript-fallback (onnx pkg missing, M8 declaration)",
+  "size_mb": 0.050098,
+  "latency_ms": 0.16476699999998345,
+  "note": "synthetic pipeline only; real D_safe needs 5h+ collection; Return+10% on replay pending real B2 anchor"
+}
