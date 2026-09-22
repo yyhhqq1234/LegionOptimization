@@ -13,7 +13,11 @@ OUT.parent.mkdir(parents=True, exist_ok=True)
 FIELDS = ["timestamp", "work", "acdc", "gear_readonly",
           "utilization.gpu [%]", "clocks.current.sm [MHz]",
           "power.draw [W]", "temperature.gpu", "power.limit [W]",
+          "fps", "frame_p95_ms",
           "policy_ver", "fence_ver", "envelope_ver"]
+# NOTE: no presentmon/dxgi on this box (checked round10) -> fps/p95 stay empty
+# (honest missing, valid=0) until operator runs PresentMon sidecar; --fps-file
+# ingests a PresentMon CSV matched by nearest timestamp when provided.
 
 
 def snap_gpu():
@@ -55,7 +59,7 @@ def main():
         while time.time() - t0 < args.seconds:
             g = snap_gpu()
             w.writerow([datetime.now().isoformat(timespec="milliseconds"),
-                        args.work, args.acdc, args.gear] + g + ["stub-1", "1.0", "1.0"])
+                        args.work, args.acdc, args.gear] + g + ["", ""] + ["stub-1", "1.0", "1.0"])
             f.flush()
             n += 1
             time.sleep(1.0)
