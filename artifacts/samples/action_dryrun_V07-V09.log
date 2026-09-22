@@ -1,0 +1,6 @@
+V01-V03 selfcheck PASS
+V04-V06 encode rows=50 fill=0.083 PASS
+V07-V09 dry-run 4 gears + Extreme convergence PASS
+BlackBox 4/4 complete, replay sample 7be77c9f6e0250dc PASS
+fence p99=0.002ms (<50ms PASS)
+zero-live-writes audit PASS (no actuate dry_run=False called)

@@ -1,18 +1,46 @@
-"""L2 全局互斥事务：单事务串行、超时回滚、dry-run 总开关（P3 Step 3-3 实现）。
+"""L2 mutex: serial, timeout rollback, dry-run switch (P3 Step 3-3)."""
 
-铁律：dry-run 默认开；--live 需 E4/E5 门禁 + 用户显式确认，缺一不可。
-"""
-
-LOCK_NAME = "hal-actuation.lock"  # 禁用旧 watcher.lock 锁名
+LOCK_NAME = "hal-actuation.lock"
 TIMEOUT_S = 15
 DRY_RUN_DEFAULT = True
 
+_BUSY = False
+_SNAPSHOT = None
+
 
 def actuate(setpoints, dry_run=True):
-    """下发设定点。dry_run 下只校验与记 log，零落盘。
-
-    dry_run=False 时门禁未过，直接拒绝（诚实失败，不静默成功）。
-    """
+    """Dry-run only validates + echoes; live refused before gate."""
     if dry_run:
         return ("dry-run", dict(setpoints))
-    raise RuntimeError("门禁 E4/E5 未过，禁止 --live 真实下发")
+    raise RuntimeError("gate E4/E5 not passed, live denied")
+
+
+def save_snapshot(setpoints):
+    return dict(setpoints)
+
+
+def restore_snapshot(snapshot):
+    if snapshot is None:
+        return {}
+    return dict(snapshot)
+
+
+def transact(fn, snapshot, elapsed_s=0.0, timeout_s=TIMEOUT_S):
+    """Transactional executor with timeout rollback (pure, testable)."""
+    if elapsed_s > timeout_s:
+        return (None, restore_snapshot(snapshot), TimeoutError("L2 15s timeout, rolled back"))
+    try:
+        res = fn()
+    except Exception as e:
+        return (None, restore_snapshot(snapshot), e)
+    return (res, None, None)
+
+
+def try_actuate_with_timeout(setpoints, fn, elapsed_s=0.0, dry_run=True):
+    snap = save_snapshot(setpoints)
+    if dry_run:
+        res, restored, err = transact(fn, snap, elapsed_s=elapsed_s)
+        if err is not None:
+            return ("dry-run-rollback", restored, err)
+        return ("dry-run", res, None)
+    raise RuntimeError("gate E4/E5 not passed, live denied")

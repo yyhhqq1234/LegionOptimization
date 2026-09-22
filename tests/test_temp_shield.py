@@ -1,6 +1,5 @@
-"""温度 Shield 单元测试（围栏 §1；行为体 P3 Step 3-4 实现）。"""
+"""Temp shield tests (fence 1; P3 Step 3-4)."""
 
-import pytest
 import yaml
 from pathlib import Path
 
@@ -35,21 +34,33 @@ def test_yaml_matches_code():
     assert f["dc_offset"] == s.DC_TEMP_OFFSET
 
 
-@pytest.mark.skip(reason="P3 Step 3-4 未实现：L1 软裁剪行为")
 def test_l1_soft_clip():
-    pass
+    out = s.l1_clip_action({"pl1_w": 40, "freq_ghz": 4.8})
+    assert out["pl1_w"] == 25.0 and abs(out["freq_ghz"] - 4.6) < 1e-9
+    assert out["burst_allowed"] == 0 and out["deny"] == "TEMP"
+    assert s.debounce_trigger(2) is False and s.debounce_trigger(3) is True
 
 
-@pytest.mark.skip(reason="P3 Step 3-4 未实现：L2 跳闸 + 策略暂停 + 重武装")
 def test_l2_trip_and_rearm():
-    pass
+    overall, _, _ = s.temp_level(99, 70)
+    assert overall == "L2"
+    trip = s.l2_trip_action()
+    assert trip["pl1_w"] == 25 and trip["policy_paused"] is True
+    assert s.rearm_ok(75, 65, 30) is True
+    assert s.rearm_ok(85, 65, 60) is False
+    assert s.rearm_ok(75, 65, 10) is False
 
 
-@pytest.mark.skip(reason="P3 Step 3-4 未实现：L3 临界回退")
 def test_l3_critical_fallback():
-    pass
+    overall, _, _ = s.temp_level(101, 70)
+    assert overall == "L3"
+    fb = s.l3_fallback_action()
+    assert fb["policy_bypassed"] is True and fb["fallback"] == "quiet.bat-equivalent"
 
 
-@pytest.mark.skip(reason="P3 Step 3-4 未实现：stale/野值按保守假设")
 def test_stale_conservative():
-    pass
+    v = s.stale_conservative(True)
+    assert v["level"] == "L2" and v["conservative"] is True
+    assert v["action"]["pl1_w"] == 25
+    v2 = s.stale_conservative(False)
+    assert v2["level"] == "OK"

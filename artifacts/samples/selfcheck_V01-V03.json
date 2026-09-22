@@ -1,0 +1,21 @@
+{
+  "nvidia_poll_hz": 1,
+  "nvidia_fields": [
+    "utilization",
+    "clock",
+    "power",
+    "temperature",
+    "power_limit"
+  ],
+  "wmi_events": [
+    "LENOVO_GAMEZONE_FAN_MODE",
+    "LENOVO_GAMEZONE_THERMAL_MODE"
+  ],
+  "gears": [
+    "Quiet",
+    "Balance",
+    "Beast",
+    "Extreme"
+  ],
+  "result": "PASS"
+}

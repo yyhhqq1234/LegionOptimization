@@ -1,20 +1,68 @@
-"""AC→DC 拔电回退（围栏 §4；P3 Step 3-4 实现）。
+"""AC-DC fallback (fence 4; P3 Step 3-4). Unknown -> DC (conservative)."""
 
-状态未知按 DC 处理（保守默认）；AC→DC 立即采信，回切需稳定 2s。
-"""
-
-# DC 持续包络（与 AC 解耦；burst 默认禁用）。
 DC_TABLE = {
     "DC-1": {"pl1_w": 35, "freq_ghz": 4.2, "min_soc": 60},
     "DC-2": {"pl1_w": 25, "freq_ghz": 3.8, "min_soc": 20},
     "DC-3": {"pl1_w": 15, "freq_ghz": 3.0, "min_soc": 0},
 }
-ACDC_FALLBACK_S = 1  # AC→DC 安全包络落地时限
-AC_REARM_STABLE_S = 2  # 回切需 AC 稳定时长
-AC_FLAP_WINDOW_S = 300  # 5min 内 ≥3 次翻转则锁 DC-2 30min
+ACDC_FALLBACK_S = 1
+AC_REARM_STABLE_S = 2
+AC_FLAP_WINDOW_S = 300
 AC_FLAP_LOCK_S = 1800
 
 
-def on_power_event(event):
-    """电源事件处理；P3 Step 3-4 未实现。"""
-    raise NotImplementedError("P3 Step 3-4 未实现")
+def select_dc_gear(soc_pct):
+    try:
+        soc = float(soc_pct)
+    except (TypeError, ValueError):
+        return "DC-3"
+    if soc >= 60:
+        return "DC-1"
+    if soc >= 20:
+        return "DC-2"
+    return "DC-3"
+
+
+def count_flips(history, now_s, window_s=AC_FLAP_WINDOW_S):
+    evs = sorted([e for e in history if now_s - e[0] <= window_s], key=lambda x: x[0])
+    flips = 0
+    for i in range(1, len(evs)):
+        if evs[i][1] != evs[i - 1][1]:
+            flips += 1
+    return flips
+
+
+def on_power_event(event, history=None, now_s=0.0, ac_stable_s=0.0):
+    """Power event handler (pure). UNKNOWN treated as DC."""
+    history = list(history or [])
+    et = (event or {}).get("type", "UNKNOWN")
+    soc = (event or {}).get("soc_pct", 0)
+    if et == "UNKNOWN":
+        et = "AC_LOST"
+    flips = count_flips(history, now_s)
+    flap_lock = flips >= 3
+    if flap_lock:
+        return {"target_dc": "DC-2", "burst_terminate": True, "deadline_s": ACDC_FALLBACK_S,
+                "ramp": [], "flap_lock": True, "flap_lock_s": AC_FLAP_LOCK_S,
+                "deny": "AC_LOST", "reason": "flap>=3/5min lock DC-2 30min"}
+    if et == "AC_LOST":
+        gear = select_dc_gear(soc)
+        return {"target_dc": gear, "burst_terminate": True, "deadline_s": ACDC_FALLBACK_S,
+                "ramp": [], "flap_lock": False, "deny": "AC_LOST",
+                "setpoints": {"pl1_w": DC_TABLE[gear]["pl1_w"],
+                              "freq_ghz": DC_TABLE[gear]["freq_ghz"]}}
+    if et == "AC_RESTORED":
+        if float(ac_stable_s) < AC_REARM_STABLE_S:
+            gear = select_dc_gear(soc)
+            return {"target_dc": gear, "burst_terminate": True,
+                    "deadline_s": ACDC_FALLBACK_S, "ramp": [], "flap_lock": False,
+                    "deny": "AC_LOST", "reason": "wait-2s-stable"}
+        cur = select_dc_gear(soc)
+        order = ["DC-3", "DC-2", "DC-1"]
+        idx = order.index(cur) if cur in order else 0
+        ramp = order[idx:] + ["AC"]
+        return {"target_dc": cur, "burst_terminate": False, "deadline_s": ACDC_FALLBACK_S,
+                "ramp": ramp, "flap_lock": False, "deny": None}
+    gear = select_dc_gear(soc)
+    return {"target_dc": gear, "burst_terminate": True, "deadline_s": ACDC_FALLBACK_S,
+            "ramp": [], "flap_lock": False, "deny": "AC_LOST"}
