@@ -31,5 +31,7 @@
 
 ## 6. Gate to phase-04-done (OPEN)
 - [ ] Real D_safe >=2000, 9-grid >=80%, interactive >=15%, 1 plug event.
+  - r26: rows ~3300 (numerically OK) but grid 1/16 W0/AC, interactive 0.0, plug 0.
 - [ ] Real Return +10% vs B2 anchor, shield not up (needs E4/E5 live + perf labels).
+  - r26: synth BO +1.3%, B2 proxy anchor 71.4; real pilot n1147 loses to mean (narrow-idle).
 - [ ] Freeze D_safe as P6 replay buffer snapshot + tag.
