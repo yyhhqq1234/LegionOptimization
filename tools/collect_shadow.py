@@ -48,9 +48,12 @@ def main():
     ap.add_argument("--work", default="W0")
     ap.add_argument("--acdc", default="AC")
     ap.add_argument("--gear", default="Balance-readonly")
+    ap.add_argument("--out", default="",
+                    help="override output file (default part2-aware)")
     args = ap.parse_args()
-    new = not OUT.exists()
-    with OUT.open("a", newline="", encoding="utf-8") as f:
+    out_path = Path(args.out) if args.out else OUT
+    new = not out_path.exists()
+    with out_path.open("a", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         if new:
             w.writerow(FIELDS)
@@ -63,7 +66,7 @@ def main():
             f.flush()
             n += 1
             time.sleep(1.0)
-    print(f"shadow appended {n} rows -> {OUT} (read-only, zero writes)")
+    print(f"shadow appended {n} rows -> {out_path} (read-only, zero writes)")
 
 
 if __name__ == "__main__":
