@@ -1,0 +1,8 @@
+{
+ "n": 331,
+ "util_min": 2.0,
+ "util_max": 11.0,
+ "power_mean": 19.56821752265861,
+ "temp_mean": 53.141993957703924,
+ "perf_label": "MISSING-frame-probe-pending"
+}
