@@ -6,11 +6,19 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "artifacts" / "datasets" / "D_safe_shadow_A.csv"
+DATA = ROOT / "artifacts" / "datasets"
 WORKS = ["W0", "W1", "W2", "W3", "W4", "W5", "W6", "W7"]
 CELL_TARGET = 80
 
-rows = list(csv.DictReader(SRC.open(encoding="utf-8"))) if SRC.exists() else []
+rows = []
+for p in sorted(DATA.glob("D_safe_shadow_A*.csv")):
+    try:
+        with p.open(encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if r.get("work") and r.get("acdc"):
+                    rows.append(r)
+    except OSError:
+        continue
 c = Counter((r["work"], r["acdc"]) for r in rows)
 cells = {(w, a): c.get((w, a), 0) for w in WORKS for a in ("AC", "DC")}
 covered = sum(1 for v in cells.values() if v >= CELL_TARGET)
