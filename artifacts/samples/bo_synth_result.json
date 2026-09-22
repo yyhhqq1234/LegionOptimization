@@ -1,0 +1,22 @@
+{
+  "safeopt_init": 10,
+  "bo_iters": 40,
+  "tried": 40,
+  "skipped_hot": 0,
+  "policy": {
+    "W0": "Beast",
+    "W1": "Beast",
+    "W2": "Extreme",
+    "W3": "Beast",
+    "W4": "Beast",
+    "W5": "Beast",
+    "W6": "Beast",
+    "W7": "Beast"
+  },
+  "return_policy": 69.51691099467071,
+  "return_b2": 68.59895168601923,
+  "gain": 0.013381535520440902,
+  "shield_rate": 0.0135,
+  "synthetic": true,
+  "note": "dry-run BO only; no live writes; small-step deltas clipped"
+}
