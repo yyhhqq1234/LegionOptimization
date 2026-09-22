@@ -1,13 +1,16 @@
 # P1 Step 1-5：A 机实测 pin（2026-09-16）。B 机对齐待其上线（P5 需要时）。
 --extra-index-url https://download.pytorch.org/whl/cu128
 numpy==1.26.4
+lightgbm==4.7.0
+onnx==1.23.0
 onnxruntime==1.26.0
+onnxscript==0.5.6
 psutil==7.2.2
 pytest==9.0.3
 pyyaml==6.0.2
 torch==2.11.0+cu128
 # 缺口声明（P1-5，owner 与顺延）：
 # - 无 pynvml → M1 走 nvidia-smi CSV（P3 已定，不阻塞）
-# - 无 onnx 包 → 仅 onnxruntime(CPU/Azure EP，无 CUDA EP)，M8 导出验证 V22–V24 记缺失声明
-# - 无 lightgbm → P4 三模型 baseline 前补（owner：P4）
+# - onnx/onnxscript 已补（P4 round1），onnxruntime 仅 CPU EP，无 CUDA EP，M8 导出验证记 EP 声明
+# - lightgbm 已补 4.7.0（P4 round1），三模型对比已跑，合成集上 LGB 反超 MLP（诚实反例）
 # - 无 nvcc → 不从源码编译 CUDA 扩展（torch 用官方 cu128 wheel，不阻塞）

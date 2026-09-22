@@ -19,7 +19,7 @@ with OUT.open("w", newline="", encoding="utf-8") as f:
     w.writerow(hdr)
     for i in range(2000):
         work = WORKS[i % 8]
-        acdc = "DC" if (i // 8) % 4 == 3 else "AC"
+        acdc = "DC" if (i % 2) == 1 else "AC"
         gear = GEARS[(i // 32) % 4]
         pl1 = {"Quiet": 25, "Balance": 40, "Beast": 65, "Extreme": 65}[gear]
         freq = {"Quiet": 3.8, "Balance": 4.8, "Beast": 5.0, "Extreme": 5.2}[gear]
