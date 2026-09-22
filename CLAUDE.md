@@ -17,3 +17,11 @@
 8. 双机分工（AGENTS.md 铁律 11）：A = 主力开发机，B = 副开发机（兼验证+迁移目标）；
    B 机可领独立模块/复测/文档活，细则见 `docs/machine-registry.md` §7；动同一文件先通气，
    push 前先 `git pull --rebase`。
+9. 防偏移执行（AGENTS.md §8 落地版）：`/resume` 先全文读 `TASKPOINT.md` 再给摘要；
+   开工前答开工三问（当前PHASE/未过验收项/§7下一步/V映射），答不上停手补读；
+   收尾前跑收尾三对（`git status`干净 + `coverage_report.py`格数不倒退 + 产物可挂验收项），偏了先回正。
+10. 优化执行（AGENTS.md §9 落地版）：S级小优化直接做+`optimize:`提交；M级先记`docs/p4-gate-report.md`
+    或 PHASE §6再做+贴前后对比；L级（改验收/架构/门禁/调序/换路线）单发提案等用户点头；
+    优化永不降门禁，结论回写 `TASKPOINT.md` 雷区/现状。
+11. P4 当前防偏移实例：合成/STRESS行永不进九宫格；单格窄分布不拿合成冒充，重跑只认
+    `python tools/coverage_report.py` 格数；`interactive_ratio`<15% 不许报采集达标。
