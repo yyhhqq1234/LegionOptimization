@@ -1,12 +1,12 @@
 {
- "n": 623,
+ "n": 1147,
  "rmse_power_temp": [
-  0.191,
-  0.498
+  0.236,
+  1.447
  ],
  "mean_baseline": [
-  0.258,
-  0.469
+  0.21,
+  1.253
  ],
  "perf_head": "BLOCKED-no-frame-labels",
  "grid": "W0/AC-only",
