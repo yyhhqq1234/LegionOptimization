@@ -16,9 +16,11 @@
 - V13-V15 envelope: 4-gear dry-run violation=0 (P3 shields); floor/SLO await t4 thresholds + real small-step (G4 excluded).
 - Return = mean-0.5std-2shield-1clamp +10% vs B2: PENDING real anchor (synthetic has no B2 baseline).
 
-## 3. Blocked (needs operator/wall-time)
-- Real D_safe: 5h+ collection per machine + 1 plug event; B machine per sampling ratio.
-- Small-step live: needs E4/E5 + explicit confirm (default dry-run).
-- LightGBM + onnx pip: `pip install lightgbm onnx` (owner P4).
+## 4. Real shadow (round4-5, read-only, job running)
+- Collector `tools/collect_shadow.py` 1Hz (nvidia-smi + scheme query, zero writes), 5h bg job pwsh-1.
+- Smoke 15 rows + bg growth: 95 (r4) -> 120 (r5), mean State48 fill 0.167 (GPU4 + pl1/burst/soc + s46; CPU/mem honest missing).
+- Commit 9dab39f pushed (502 x2 then OK). Data `artifacts/datasets/` gitignored per iron law 10.
+- Still needs: W1/W2/game/office/idle rotation + 1 plug event for 8h E4 coverage; live E4/E5 gate.
+- LightGBM + onnx/onnxscript: installed round1 (4.7.0/1.23.0), requirements locked.
 
-Next: start real collection (overnight shadow) or proceed P5 transfer design on synthetic.
+Next: keep shadow running (overnight) or proceed P5 transfer design on synthetic.
