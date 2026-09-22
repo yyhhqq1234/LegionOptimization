@@ -18,7 +18,7 @@
 
 ## 4. Real shadow (round4-5, read-only, job running)
 - Collector `tools/collect_shadow.py` 1Hz (nvidia-smi + scheme query, zero writes), 5h bg job pwsh-1.
-- Smoke 15 rows + bg growth: 95 (r4) -> 120 (r5) -> 167 (r6, W0/AC), mean State48 fill 0.167 (GPU4 + pl1/burst/soc + s46; CPU/mem honest missing). pytest 45 green.
+- Smoke 15 rows + bg growth: 95 (r4) -> 120 (r5) -> 167 (r6, W0/AC) -> 555 real (r12: part1 508 + part2 47, W0/AC), mean State48 fill 0.167 (GPU4 + pl1/burst/soc + s46; CPU/mem honest missing, fps/p95 empty). pytest 45 green.
 - Commit 9dab39f pushed (502 x2 then OK). Data `artifacts/datasets/` gitignored per iron law 10.
 - Still needs: W1/W2/game/office/idle rotation + 1 plug event for 8h E4 coverage; live E4/E5 gate.
 - LightGBM + onnx/onnxscript: installed round1 (4.7.0/1.23.0), requirements locked.
