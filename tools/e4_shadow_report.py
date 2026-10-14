@@ -186,7 +186,9 @@ def main():
                "labelled_rows": len(p95s),
                "note": "window spread only; not the fence criterion"}
     c3 = {"status": "BLOCKED",
-          "reason": "no in-service frame baseline: single policy version, no paired run",
+          "reason": "E4 shadow is dry-run (zero actuation): shadow and in-service share the same "
+                    "physical state, so there is nothing to differ; testable only once actuation "
+                    "is live (E5 canary)",
           "required": "shadow window p95 within +-5% of the same-period in-service p95"}
 
     # criterion 4: zero crash
