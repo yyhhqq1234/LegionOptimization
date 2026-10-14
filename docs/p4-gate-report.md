@@ -352,5 +352,29 @@ DC 段实测（本轮）：`part7` 行 `W0,DC,Balance,...`（真读 4.78W/43°C�
 
 修正后覆盖：**W0 9.89h / W1 2.11h / W2 3.54h** —— 三项仍全部 PASS（结论不变，数字归真）。
 
+## 15. r38：真数三模型起步（`pilot_real_train.py` 升级，M 级先记后做）
+
+### 15.1 为什么必须改
+
+原 `pilot_real_train.py` 已过期：**硬编码只读 part1+part2**、特征仅 2 维（util, mhz）、
+`perf_head` 恒写 `BLOCKED-no-frame-labels`、`grid` 恒写 `W0/AC-only`。
+而 r37 之后已有：真档位标签（part5+）、游戏/办公帧标（影子 JSONL）、DC 段、插拔事件。
+
+### 15.2 数据源口径（两个集合，分开报，不混算）
+
+| 集合 | 来源 | 行数（当轮） | 可用特征 | 目标头 |
+|---|---|---|---|---|
+| A：遥测全量 | `artifacts/datasets/D_safe_shadow_A_part*.csv` | 55939 | util、mhz | power、temp |
+| B：帧标子集 | `artifacts/samples/e4_shadow_*.jsonl`（含 `frames`） | 6120 | util、mhz、**真档位** | **perf（p95/fps）** |
+
+- 集合 A 含 part1–4 的 48753 行（gear 为常量、无档位信息）：**只用其遥测特征**，不声称有档位维度。
+- 集合 B 源自同窗影子运行，**每行都带真档位与帧标**；但其窗口有限（游戏 2h + 办公 15min）。
+- 诚实标注：这是「状态→观测量」的关联模型，**不是** f(s,a)（采集期无动作变量，Action7 只在影子试算里生成）。
+
+### 15.3 产出
+
+`artifacts/samples/real_models.json`：两组模型的 RMSE + 均值基线 + 行数 + 分层（按 work/gear），
+替代旧的 `real_pilot.json` 单向记录（旧文件保留为历史）。
+
 
 

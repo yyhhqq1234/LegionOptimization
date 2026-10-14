@@ -1,0 +1,67 @@
+{
+ "set_A_telemetry": {
+  "rows": 55995,
+  "features": [
+   "util_pct",
+   "sm_ghz"
+  ],
+  "targets": [
+   "power_w",
+   "temp_c"
+  ],
+  "gear_labels_present": [
+   "Balance",
+   "Balance-readonly",
+   "Beast",
+   "Quiet",
+   "mode:2"
+  ],
+  "gear_row_counts_top": {
+   "Balance-readonly": 48753,
+   "Beast": 5889,
+   "Balance": 1125,
+   "mode:2": 124,
+   "Quiet": 104
+  },
+  "rmse_power_temp": [
+   9.543,
+   3.977
+  ],
+  "mean_baseline": [
+   54.707,
+   22.589
+  ],
+  "n_used": 55995
+ },
+ "set_B_frame_labels": {
+  "rows": 6135,
+  "features": [
+   "util_pct",
+   "sm_ghz",
+   "gear_idx"
+  ],
+  "targets": [
+   "frame_p95_ms"
+  ],
+  "windows": [
+   "W0",
+   "W1",
+   "W2"
+  ],
+  "rmse_p95": [
+   15.511
+  ],
+  "mean_baseline": [
+   25.15
+  ],
+  "n_used": 6135,
+  "gear_row_counts": {
+   "Balance": 432,
+   "Beast": 5703
+  }
+ },
+ "perf_head": "REAL-frame-labels (set B)",
+ "model_kind": "state->observation association (not f(s,a): no action variable in collection)",
+ "grid": "multi-cell: W0/Balance, W1/Balance, W2/Beast",
+ "synthetic": false
+}
