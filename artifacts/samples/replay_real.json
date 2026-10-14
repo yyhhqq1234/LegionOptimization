@@ -1,0 +1,80 @@
+{
+  "rows_frame_labelled": 6135,
+  "rows_used": 6135,
+  "reward_form": "perf - 2*shield*100 - 1*clamp*100 (same form as reward_baseline_B2.py)",
+  "substitutions": {
+    "perf": "100*clip(fps/120,0,1) from frame labels (no perf_score in real data)",
+    "shield": "GPU temperature >= 95C only (CPU channel missing pre-E5)",
+    "target_fps": 120.0,
+    "gear": "rows without an unmapped real gear excluded"
+  },
+  "real_return": {
+    "n": 6135,
+    "mean": 94.98,
+    "p10": 92.5,
+    "p50": 100.0,
+    "p90": 100.0
+  },
+  "real_shield_rows": 0,
+  "real_clamp_rows": 0,
+  "real_by_work": {
+    "W0": {
+      "n": 15,
+      "mean": 95.86,
+      "p10": 100.0,
+      "p50": 100.0,
+      "p90": 100.0
+    },
+    "W1": {
+      "n": 417,
+      "mean": 45.53,
+      "p10": 6.67,
+      "p50": 37.92,
+      "p90": 100.0
+    },
+    "W2": {
+      "n": 5703,
+      "mean": 98.59,
+      "p10": 100.0,
+      "p50": 100.0,
+      "p90": 100.0
+    }
+  },
+  "real_by_gear": {
+    "Balance": {
+      "n": 432,
+      "mean": 47.27,
+      "p10": 6.67,
+      "p50": 40.42,
+      "p90": 100.0
+    },
+    "Beast": {
+      "n": 5703,
+      "mean": 98.59,
+      "p10": 100.0,
+      "p50": 100.0,
+      "p90": 100.0
+    }
+  },
+  "b2_anchor": {
+    "n": 32,
+    "mean": 71.44,
+    "p10": 59.4,
+    "p50": 73.99,
+    "p90": 76.31
+  },
+  "b2_source": "artifacts\\samples\\reward_baseline_B2.csv",
+  "perf_saturation_rows": 5324,
+  "perf_saturation_rate": 0.8678,
+  "perf_definition_caveat": "fps-derived perf saturates once fps exceeds the target (every game row reads 100 here), and the spec defines non-game perf as responsiveness rather than frames, so the W0/W1 groups are not comparable under this conversion",
+  "nominal_gain": 0.3295,
+  "verdict": "NOT-ACCEPTANCE-EVIDENCE",
+  "verdict_reasons": [
+    "perf saturates for every game row: target 120fps sits below the measured ~159fps, so the gain largely reflects a saturated perf term, not policy value",
+    "E4 shadow is dry-run: no actuation, so the replay cannot separate the policy's contribution from the environment (same reason c3 is BLOCKED inside P4)",
+    "cross-source comparison: real perf is derived from fps while the B2 anchor is a surrogate prediction over a frozen config - the two are not the same quantity",
+    "environment is not matched: real rows were collected in Beast gear on the high-performance plan, the B2 anchor carries no such state",
+    "shield test only sees the GPU (CPU channel absent), so the shield term is a lower bound"
+  ],
+  "unlock": "Return acceptance needs a policy-acted replay (a version that actually issues setpoints) or the live canary; this script stays a magnitude check."
+}
