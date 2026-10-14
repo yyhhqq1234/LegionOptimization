@@ -99,13 +99,17 @@ def main():
     pm = None
     if PM_EXE.exists():
         sess = f"shadow{ts}"
+        # NOTE: --process_name is deliberately NOT passed to PresentMon. Game exe names on
+        # this box are non-standard (e.g. "ff7rebirth_.exe"): a wrong pattern yields zero
+        # frames for the whole window. Capturing every process and filtering the Application
+        # column during the join is the robust order (the CSV costs more disk, which is fine
+        # because pm_*.csv is gitignored).
         cmd = [str(PM_EXE), "--timed", str(args.seconds + 20), "--session_name", sess,
                "--output_file", str(pm_csv), "--date_time", "--terminate_after_timed",
                "--no_console_stats"]
-        if args.process:
-            cmd += ["--process_name", args.process]
         pm = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print(f"PresentMon recording -> {pm_csv.name} (session {sess}, process={args.process or 'ALL'})")
+        print(f"PresentMon recording -> {pm_csv.name} (session {sess}, all processes; "
+              f"join filters Application={args.process or 'ALL'})")
         time.sleep(3)
 
     shadow_cmd = [sys.executable, str(ROOT / "tools" / "shadow_run.py"),
