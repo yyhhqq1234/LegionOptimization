@@ -40,6 +40,11 @@
   `tools/collect_shadow.py --fps-file/--fps-process/--fps-reload` + `tools/fps_join.py` (offline backfill).
   PresentMon locks its CSV while recording, so the join is post-capture; smoke labelled 16/16 rows
   (fps 45.5-178.0, p95 6.0-6.1ms, fixed -28796.9s clock offset). See `docs/p4-gate-report.md` §3.
+- **r29 gear channel**: `src/sense/lenovo_wmi.py` (Lenovo ACPI-WMI `GetThermalMode`, COM-first, ~263ms)
+  + `tools/gear_probe.py` (Fn+Q calibration walk) + `collect_shadow --sense-gear`.
+  Fn+Q does NOT move the Windows scheme on this box (measured: Beast mode while scheme="节能"),
+  so the r28 scheme map is dead. `GetThermalMode -> 3 = Beast` (operator-confirmed);
+  GetCPUTemp/GetGPUTemp return 0 = unusable, CPU proxy limit stands. See `docs/p4-gate-report.md` §8.
 
 ## 6. Gate to phase-04-done (OPEN)
 - [ ] Real D_safe >=2000, 9-grid >=80%, interactive >=15%, 1 plug event.

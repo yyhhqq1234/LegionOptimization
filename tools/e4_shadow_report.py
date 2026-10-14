@@ -121,25 +121,33 @@ def main():
                  "scheme_changes": sum(1 for i in range(1, len(rows))
                                        if rows[i].get("scheme_guid") != rows[i - 1].get("scheme_guid")),
                  "required": "agreement >= 85%"}
-    if gear_map:
-        counted = matched = 0
-        for r in rows:
-            actual = gear_map.get(r.get("scheme_name") or "")
-            desired = (r.get("policy") or {}).get("gear_desired")
-            if actual and desired:
-                counted += 1
-                matched += 1 if actual == desired else 0
-        if counted:
-            rate = matched / counted
-            c1 = dict(agreement, status="PASS" if rate >= 0.85 else "FAIL",
-                      agreement_rate=round(rate, 4), counted_rows=counted, gear_map=gear_map)
+    if True:
+        # fence 5.3 wording: shadow policy vs the IN-SERVICE POLICY (same state -> gear).
+        # This box runs a single policy version (stub-1), so there is no second version to
+        # compare against yet -> BLOCKED-no-second-policy. Comparing the shadow建议 against
+        # the machine's manual Fn+Q gear is a DIFFERENT question and is reported as c1b
+        # (observed, informational; it never gates e4_ready).
+        pass
+    if True:
+        known = [(r.get("gear_actual"), (r.get("policy") or {}).get("gear_desired"))
+                 for r in rows]
+        known = [(a, d) for a, d in known
+                 if a and not str(a).startswith(("mode:", "unknown", "uncalibrated")) and d]
+        if known:
+            matched = sum(1 for a, d in known if a == d)
+            rate = matched / len(known)
+            c1b = {"status": "OBSERVED",
+                   "shadow_vs_manual_gear_rate": round(rate, 4), "counted_rows": len(known),
+                   "gear_distribution": dict(Counter(a for a, _ in known)),
+                   "note": "informational only: manual gear is not the in-service policy output"}
         else:
-            c1 = dict(agreement, status="BLOCKED",
-                      reason="--gear-map matched no observed scheme name", gear_map=gear_map)
-    else:
+            c1b = {"status": "BLOCKED", "reason": "no real gear channel in rows "
+                                                  "(run tools/shadow_run.py r29+)"}
         c1 = dict(agreement, status="BLOCKED",
-                  reason="no calibrated active-gear channel (scheme only, mapping uncalibrated)",
-                  note="pass --gear-map after a Fn+Q calibration walk; counted as BLOCKED, never as pass")
+                  reason="no second policy version to compare against (in-service == shadow == stub-1)",
+                  note="criterion 1 needs a new logic vs the in-service policy at P6; "
+                       "shadow-vs-manual gear is c1b, informational")
+
 
     # criterion 2: trial trip rate
     lv = Counter(((r.get("fence") or {}).get("level") or "NO-FENCE") for r in rows)
@@ -199,8 +207,8 @@ def main():
     out = {"generated_from": args.glob, "rows": len(rows),
            "coverage": {"cells": hours, "e4_requirements": cov,
                         "plug_events": nplug, "plug_rows": plug_rows[:3]},
-           "c1_action_agreement": c1, "c2_trial_trip_rate": c2,
-           "c3_fluency_neutral": c3, "c4_zero_crash": c4,
+           "c1_action_agreement": c1, "c1b_shadow_vs_manual_gear": c1b,
+           "c2_trial_trip_rate": c2, "c3_fluency_neutral": c3, "c4_zero_crash": c4,
            "e4_ready": ready,
            "open_items": [k for k, v in (("c1_action_agreement", c1), ("c3_fluency_neutral", c3))
                           if v["status"] != "PASS"] +

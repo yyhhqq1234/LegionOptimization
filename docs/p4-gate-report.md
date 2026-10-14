@@ -116,3 +116,46 @@ python tools\e4_shadow_report.py --gear-map "节能=Quiet,平衡=Balance,性能=
 - [ ] 补 W1/W2 各 5 分钟 + DC 列 + 真实插拔事件（覆盖与插拔项，`tools/plug_watch.py` 已就绪）
 - [ ] CPU 温度通道（MSR/签名驱动）——pre-E5 只能 proxy，属已知局限，E5 前不解除
 
+## 8. r29：档位真读打通（Lenovo ACPI-WMI）+ c1 口径修正
+
+### 8.1 实测（决定性）
+
+- 现象：机器在**野兽模式**，但 `powercfg /GETACTIVESCHEME` 仍报 **"节能"**（d509f0cb-…）
+  → Fn+Q 档位不跟随 Windows 电源方案，r28 的 `scheme → gear --gear-map` 路线作废。
+- 解法：`root\WMI: LENOVO_GAMEZONE_DATA` 暴露 **out 参数**类方法，**空参数**调用即返回机器真实状态：
+
+| 方法（空参调用） | 返回 | 含义 |
+|---|---|---|
+| `GetThermalMode` | **3** | 操作者确认当前为野兽模式 → **3 = Beast** |
+| `GetSmartFanMode` | 3 | 与档位联动 |
+| `GetCpuFrequency` | 340792400 | ×10 = **3.407924 GHz** |
+| `GetProductInfo` / `GetVersion` / `GetPowerChargeMode` | 100 / 17 / 1 | 机型 ID / 固件版本 / 充电模式 |
+| `GetCPUTemp` / `GetGPUTemp` | 0 | ACPI 未提供 → **不可当温度用**（CPU proxy 局限仍在） |
+
+- 传 `Data` 参数会报"无效的参数"（该参数 qualifier `out=True`，ID=0，Description="Real Thremal Mode"）。
+- `GetThermalMode` 连读 3 次稳定；COM(win32com) 单次 ≈263ms，PowerShell 回退 ≈320ms；`read_all()` 十项 ≈2.6s（故影子每 tick 只读档位，CPU 频率每 10 tick 一次）。
+- 只读边界：本类同时存在 `Set*`（SetSmartFanMode / SetFanCooling / SetBIOSOC …），**本项目一律不调用**，新增 `src/sense/lenovo_wmi.py` 只封装 Get*/Is*。
+- 新增映射表 `MODE_TO_GEAR={3:"Beast"}`，未映射档位原样写 `mode:<n>`（不猜）。
+
+### 8.2 数据标签质量修复
+
+- 此前 `gear_readonly` 列写的是**命令行硬标签**（`Balance-readonly`），与真实档位无关 ——
+  这会污染 D_safe 标签与 E4 证据。
+- 现 `collect_shadow.py --sense-gear` 写入真读档位；实测：`W0 | AC | Beast`。
+
+### 8.3 c1 口径修正（诚实性）
+
+- fence §5.3 原文：一致率 = **影子策略 vs 在运策略**（同一状态下档位输出），不是"vs 机器人工档位"。
+- 本机只有一个策略版本（stub-1），自比无意义 → c1 = `BLOCKED-no-second-policy`（P6 引入新逻辑后才可算）。
+- "策略建议 vs 人工档位"降级为观察项 **c1b**（`OBSERVED`，不计入 `e4_ready`）：实测 6 行 rate 0.0（stub 建议 Balance vs 人工 Beast）。
+
+### 8.4 校准走档（待操作者动作）
+
+probe 窗口内按 Fn+Q 走一圈即可补齐 `MODE_TO_GEAR`：
+
+```powershell
+python tools\gear_probe.py --seconds 180
+python tools\gear_probe.py --from-log artifacts\datasets\gear_probe.jsonl
+```
+
+

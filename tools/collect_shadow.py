@@ -3,25 +3,38 @@
 optimize (P4 r27):
  - nvidia-smi left PATH after the 617.14 driver refresh; find_nvidia_smi() falls back
    to the DriverStore copy so续採 cannot silently append empty rows.
- - perf labels: --fps-file + --fps-process ingest a concurrently running PresentMon CSV.
-   PresentMon's --date_time carries a constant clock offset on this box, so the series
-   is rebased onto capture start when it disagrees with wall clock by >120s (offset
-   printed). The file is re-read every --fps-reload seconds so labels exist while the
-   capture runs; rows are merged by timestamp (no duplicates).
+ - perf labels: --fps-file + --fps-process ingest a concurrently running PresentMon CSV
+   (PresentMon locks its CSV while recording, so labels are joined afterwards with
+   tools/fps_join.py). PresentMon --date_time carries a constant clock offset on this box,
+   so the series is rebased onto capture start when it disagrees by >120s (offset printed).
  - fps/p95 stay empty = honest missing when no PresentMon file is supplied.
+
+optimize (P4 r29):
+ - --sense-gear reads the REAL machine gear from the Lenovo ACPI-WMI module
+   (LENOVO_GAMEZONE_DATA.GetThermalMode) instead of trusting the command-line label:
+   the gear column used to be a hardcoded argument, which cannot support the E4
+   agreement evidence or a trustworthy dataset label. Unmapped modes are written raw
+   as "mode:<n>" - never guessed into a gear name.
 """
 import argparse
 import csv
 import glob
 import shutil
 import subprocess
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "src"))
 OUT = ROOT / "artifacts" / "datasets" / "D_safe_shadow_A.csv"
 OUT.parent.mkdir(parents=True, exist_ok=True)
+
+try:
+    import sense.lenovo_wmi as lw
+except Exception:                      # keep the collector usable without the module
+    lw = None
 
 FIELDS = ["timestamp", "work", "acdc", "gear_readonly",
           "utilization.gpu [%]", "clocks.current.sm [MHz]",
@@ -78,6 +91,21 @@ def snap_scheme():
         return ""
 
 
+def real_gear(fallback_label):
+    """Real gear from the Lenovo WMI module; falls back to the label (marked) if absent."""
+    if lw is None:
+        return fallback_label
+    try:
+        name, mode = lw.read_gear()
+    except Exception:
+        name, mode = None, None
+    if name:
+        return name
+    if mode is not None:
+        return f"mode:{mode}"
+    return fallback_label
+
+
 def _parse_time(cell):
     """(value, kind) from a PresentMon time cell; kind 'numeric' | 'epoch' | ''."""
     raw = str(cell).strip()
@@ -100,7 +128,8 @@ def load_presentmon(path, wall0, process="", rebase_floor=120.0):
 
     Columns accepted: MsBetweenPresents / FrameTime (ms) with CPUStartDateTime /
     CPU Start Time / CPUStartTime / TimeInSeconds. process filters the Application
-    column (case-insensitive) so桌面合成 (dwm.exe) frames never enter a game cell.
+    column (case-insensitive) so desktop composition (dwm.exe) frames never enter a
+    game cell.
     """
     rows = []
     try:
@@ -173,13 +202,16 @@ def main():
     ap.add_argument("--seconds", type=int, default=300)
     ap.add_argument("--work", default="W0")
     ap.add_argument("--acdc", default="AC")
-    ap.add_argument("--gear", default="Balance-readonly")
+    ap.add_argument("--gear", default="Balance-readonly",
+                    help="label used only when --sense-gear is off or the read fails")
+    ap.add_argument("--sense-gear", action="store_true",
+                    help="write the REAL gear from Lenovo ACPI-WMI (r29) instead of the label")
     ap.add_argument("--out", default="",
                     help="override output file (must use *_part*.csv naming)")
     ap.add_argument("--fps-file", default="",
                     help="PresentMon CSV (run PresentMon concurrently over the same window)")
     ap.add_argument("--fps-process", default="",
-                    help="Application column filter, e.g. game.exe (excludes dwm.exe desktop frames)")
+                    help="Application column filter, e.g. game.exe (excludes dwm.exe frames)")
     ap.add_argument("--fps-reload", type=float, default=30.0,
                     help="re-read the PresentMon CSV every N seconds while capturing")
     args = ap.parse_args()
@@ -191,7 +223,8 @@ def main():
         rows, note = load_presentmon(args.fps_file, wall0, args.fps_process)
         series = merge_series(series, rows)
     new = not out_path.exists()
-    print(f"nvidia-smi: {find_nvidia_smi() or 'NOT FOUND'}; fps frames: {len(series)} ({note})")
+    print(f"nvidia-smi: {find_nvidia_smi() or 'NOT FOUND'}; fps frames: {len(series)} ({note}); "
+          f"sense-gear={'on' if args.sense_gear else 'off'}")
     last_reload = time.time()
     with out_path.open("a", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
@@ -209,15 +242,18 @@ def main():
                 if len(series) != before:
                     print(f"  fps reload: +{len(series) - before} frames ({note})")
             g = snap_gpu()
-            fps, p95 = fps_window(series, now.timestamp()) if series else ("", "")
+            gear = real_gear(args.gear) if args.sense_gear else args.gear
+            fps, p95 = fps_window([(t, v) for t, v in series.items()],
+                                  now.timestamp()) if series else ("", "")
             w.writerow([now.isoformat(timespec="milliseconds"),
-                        args.work, args.acdc, args.gear] + g + [fps, p95]
+                        args.work, args.acdc, gear] + g + [fps, p95]
                        + ["stub-1", "1.0", "1.0"])
             f.flush()
             n += 1
             time.sleep(1.0)
     print(f"shadow appended {n} rows -> {out_path} (read-only, zero writes)")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

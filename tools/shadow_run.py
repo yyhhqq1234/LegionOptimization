@@ -42,6 +42,7 @@ import blackbox.log as bl             # noqa: E402
 import guard.shields as sh            # noqa: E402
 import state.state48 as st            # noqa: E402
 import policy.stub as stub            # noqa: E402
+import sense.lenovo_wmi as lw         # noqa: E402
 from collect_shadow import fps_window, find_nvidia_smi, load_presentmon, snap_gpu  # noqa: E402
 
 POLICY_VER = "stub-1"
@@ -146,6 +147,10 @@ def main():
                     print(f"  fps reload: +{len(series) - before} frames ({fps_note})")
             g = snap_gpu()
             util, mhz, power_w, temp, pl = (num(v) for v in g)
+            # real in-service gear from the Lenovo ACPI-WMI module (~260ms/call, 1Hz is fine);
+            # CPU freq is polled every 10th tick to keep the tick well under 1s
+            gear_name, gear_mode = lw.read_gear()
+            cpu_freq_ghz = lw.read_cpu_freq_ghz() if stats["ticks"] % 10 == 0 else None
             acdc_real, soc = read_power()
             acdc = args.acdc_label or acdc_real
             guid, sname = read_scheme()
@@ -172,7 +177,9 @@ def main():
                                "valid_state": vec[st.S45_VALID_STATE],
                                "valid_action": vec[st.S47_VALID_ACTION]},
                    "cpu_temp_src": "proxy-gpu" if temp is not None else "missing",
-                   "gear_actual": "uncalibrated-scheme-only",
+                   "gear_actual": gear_name or (f"mode:{gear_mode}" if gear_mode is not None
+                                                else "unknown"),
+                   "gear_mode": gear_mode, "lenovo_cpu_freq_ghz": cpu_freq_ghz,
                    "policy_ver": policy_ver, "fence_ver": FENCE_VER,
                    "envelope_ver": ENVELOPE_VER}
 
