@@ -460,5 +460,34 @@ reward 形式与 `reward_baseline_B2.py` 一致（`perf - 2·shield·100 - 1·cl
 - **Return 验收需要「有作动的回放」或 live 金丝雀**；本脚本只在量级层面提供参考，
   **不构成 +10% 证据**（与 c3 同源结论）。
 
+## 19. r42：CPU 通道补齐 + 编译负载强度校准（W3 格）
+
+### 19.1 发现：CPU 型负载在 GPU-only 通道下与 idle 不可分
+
+W3 编译首次采集（part10）实测：`GPU util 0% / 180MHz / 4.36W / 51°C`，与 W0 idle 几乎相同
+—— 编译负载在 CPU 侧，而采集器只读 nvidia-smi。若不补通道，W3/W4/W7 等 **CPU 型格子在特征上等同于 W0**
+（无法分类、无法建模，等于"格子填了但没信息"）。
+
+### 19.2 处置：CPU 利用率是**无需驱动**可得通道
+
+`Win32_PerfFormattedData_PerfOS_Processor`（`Name='_Total'`）→ CSV 新增 `cpu_util` 列
+（r42，第 16 列；schema 守卫同步更新）。`cpu_temp_c` 仍无通道（pre-E5），**不伪造**。
+
+### 19.3 负载强度校准（教训：不能"跑个 build"就算负载）
+
+| 阶段 | 负载形态 | 实测 CPU |
+|---|---|---|
+| 首版（60 个 .cs，`dotnet build -t:Rebuild` 循环） | 时间耗在 dotnet CLI 启停 | **0.23 核 / 7.1%** |
+| 扩容（460 个 .cs ≈ 3.6MB 源码，`-m:8` 多核） | 真正的多核编译 | **5.67 核 / 37.4%** |
+
+- 读数可信度：`Get-Process` 的 CPU 时间增量（34.02s/6s = 5.67 核）与 `Get-Counter` 的 37.4% 两条独立路径互证。
+- **方法论**：编译类负载必须校准强度，否则采到的是"进程启停"而非"编译压力"；
+  该校准法（CPU 时间增量 ÷ 采样秒数 = 占用核数）可直接复用于 W4/W5/W7 各格。
+- 负载形态记录：`artifacts/build_load/app`（460 个 C# 编译单元，工作区内自建，可复现）。
+
+### 19.4 W3/AC 采集（part11）
+
+`--work W3 --acdc AC --sense-gear` 与强编译负载同窗；行含 `cpu_util`、`gear=Beast`、`scheme=高性能`。
+
 
 

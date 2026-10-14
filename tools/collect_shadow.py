@@ -1,21 +1,20 @@
 """Shadow collector: read-only 1Hz nvidia-smi + scheme query. NEVER writes (dry-run always).
 
-optimize (P4 r27):
- - nvidia-smi left PATH after the 617.14 driver refresh; find_nvidia_smi() falls back
-   to the DriverStore copy so续採 cannot silently append empty rows.
- - perf labels: --fps-file + --fps-process ingest a concurrently running PresentMon CSV
-   (PresentMon locks its CSV while recording, so labels are joined afterwards with
-   tools/fps_join.py or tools/run_shadow_window.py).
+optimize (P4 r27): nvidia-smi left PATH after the 617.14 driver refresh -> find_nvidia_smi()
+ falls back to the DriverStore copy. Perf labels come from a concurrently recorded PresentMon
+ CSV joined afterwards (tools/fps_join.py / tools/run_shadow_window.py).
 
-optimize (P4 r29): --sense-gear reads the REAL machine gear from the Lenovo ACPI-WMI module
- (LENOVO_GAMEZONE_DATA.GetThermalMode) instead of trusting the command-line label.
+optimize (P4 r29): --sense-gear reads the REAL gear from LENOVO_GAMEZONE_DATA.GetThermalMode
+ instead of trusting the command-line label.
 
-optimize (P4 r36): the Windows power scheme is a real, independent variable (the operator
- switched 节能 -> 高性能 mid-game at 12:30:40 and the telemetry moved), and parts 1-8 never
- recorded it. The CSV now carries a trailing `scheme` column (read per tick via powercfg)
- so the variable can be controlled or stratified instead of silently confounding the data.
- A schema guard refuses to append to a file whose header lacks the new column, because a
- silent column mismatch is exactly the old "mixed-column CSV" failure mode.
+optimize (P4 r36): the Windows power scheme is a real independent variable, so the CSV carries
+ a trailing `scheme` column; a schema guard refuses to append to a file whose header differs.
+
+optimize (P4 r42): W3/W4/W7-style workloads are CPU-bound and look exactly like idle through
+ nvidia-smi alone (measured on the W3 rebuild: GPU 0 percent / 4.36W / 51C while 2 dotnet
+ processes were compiling). CPU utilization is available WITHOUT a driver through the WMI
+ performance counter, so the CSV now carries `cpu_util` too. `cpu_temp_c` still has no channel
+ pre-E5 and is not fabricated anywhere.
 """
 import argparse
 import csv
@@ -42,13 +41,15 @@ FIELDS = ["timestamp", "work", "acdc", "gear_readonly",
           "power.draw [W]", "temperature.gpu", "power.limit [W]",
           "fps", "frame_p95_ms",
           "policy_ver", "fence_ver", "envelope_ver",
-          "scheme"]
+          "scheme", "cpu_util"]
 
 NVSMI_HINTS = [
     r"C:\Program Files\NVIDIA Corporation\NVSMI\nvidia-smi.exe",
     r"C:\Windows\System32\nvidia-smi.exe",
 ]
 _NVSMI = ""
+_CPU_PS = ("(Get-CimInstance Win32_PerfFormattedData_PerfOS_Processor "
+           "-Filter \"Name='_Total'\").PercentProcessorTime")
 
 
 def find_nvidia_smi():
@@ -94,6 +95,17 @@ def snap_scheme():
         if not out:
             return ""
         return out.split("(", 1)[1].rstrip(")") if "(" in out else out
+    except Exception:
+        return ""
+
+
+def snap_cpu_util():
+    """CPU total utilization (percent) via the WMI perf counter - no driver required."""
+    try:
+        r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", _CPU_PS],
+                           capture_output=True, text=True, timeout=15)
+        s = (r.stdout or "").strip()
+        return s if s.isdigit() else ""
     except Exception:
         return ""
 
@@ -232,6 +244,8 @@ def main():
                     help="write the REAL gear from Lenovo ACPI-WMI (r29) instead of the label")
     ap.add_argument("--no-scheme", action="store_true",
                     help="skip the trailing power-scheme column read (default: read it)")
+    ap.add_argument("--no-cpu", action="store_true",
+                    help="skip the CPU-utilization column read (default: read it)")
     ap.add_argument("--out", default="",
                     help="override output file (must use *_part*.csv naming)")
     ap.add_argument("--fps-file", default="",
@@ -253,7 +267,7 @@ def main():
             head = ""
         if head and head.split(",") != FIELDS:
             print(f"ERROR: {out_path.name} header has {len(head.split(','))} columns, "
-                  f"current schema has {len(FIELDS)} (added 'scheme' in r36). "
+                  f"current schema has {len(FIELDS)} (added 'cpu_util' in r42). "
                   f"Write to a new --out file instead of appending.")
             return 2
     wall0 = time.time()
@@ -263,7 +277,8 @@ def main():
         rows, note = load_presentmon(args.fps_file, wall0, args.fps_process)
         series = merge_series(series, rows)
     print(f"nvidia-smi: {find_nvidia_smi() or 'NOT FOUND'}; fps frames: {len(series)} ({note}); "
-          f"sense-gear={'on' if args.sense_gear else 'off'}; scheme={'off' if args.no_scheme else 'on'}")
+          f"sense-gear={'on' if args.sense_gear else 'off'}; scheme={'off' if args.no_scheme else 'on'}; "
+          f"cpu={'off' if args.no_cpu else 'on'}")
     last_reload = time.time()
     with out_path.open("a", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
@@ -283,11 +298,12 @@ def main():
             g = snap_gpu()
             gear = real_gear(args.gear) if args.sense_gear else args.gear
             scheme = "" if args.no_scheme else snap_scheme()
+            cpu = "" if args.no_cpu else snap_cpu_util()
             fps, p95 = fps_window([(t, v) for t, v in series.items()],
                                   now.timestamp()) if series else ("", "")
             w.writerow([now.isoformat(timespec="milliseconds"),
                         args.work, args.acdc, gear] + g + [fps, p95]
-                       + ["stub-1", "1.0", "1.0", scheme])
+                       + ["stub-1", "1.0", "1.0", scheme, cpu])
             f.flush()
             n += 1
             time.sleep(1.0)
