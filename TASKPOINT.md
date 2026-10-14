@@ -1,8 +1,8 @@
 # TASKPOINT — 项目级任务断点
 
-> 保存时间：2026-10-14 11:05（UTC+8）
+> 保存时间：2026-10-14 11:15（UTC+8）
 > 项目根目录：D:\LegionOptimization
-> 分支/版本：master @ 7bdfeb2（远端已同步；tags：legion-legacy-b2、phase-00-done、phase-03-done）
+> 分支/版本：master @ 055392a（远端已同步；tags：legion-legacy-b2、phase-00-done、phase-03-done）
 
 ## 1. 任务目标
 
@@ -13,9 +13,11 @@
   - [x] P1 E2 只读探针（gpu_baseline_A 775samples/780s）
   - [x] P2 E3 新开机时序（299s+202s 双轮）+ LKG staging（2/2 <60s，只读）
   - [x] P3 HAL L0–L3 + State48/Action7 + dry-run 45单测绿 + tag phase-03-done
-  - [ ] P4 回放验收：相对 B2 基线 Return +10% 且 shield 不上升（合成BO仅+1.3%；真值待多格+perf标+E4/E5 live；perf 标链路 r27 已通）
+  - [x] P4 perf 标链路（PresentMon 2.6.0 + fps_join 离后回填，16/16 实测，r27）
+  - [x] P4 E4 影子链路实现（shadow_run 六步 + e4_shadow_report 四判据，r28）
+  - [ ] P4 回放验收：相对 B2 基线 Return +10% 且 shield 不上升（合成BO仅+1.3%；真值待多格+perf标+E4/E5 live）
   - [ ] P4 九宫格≥80%（当前 3/16：W0/W1/W2 仅 AC）
-  - [ ] E4 影子门禁：≥8h 有效覆盖（游戏≥2h + 办公≥2h + idle≥1h + ≥1 插拔电）——**阻塞点=影子 run 链路未实现**
+  - [ ] E4 影子门禁通过：覆盖（游戏≥2h + 办公≥2h + idle≥1h + ≥1 插拔电）+ 四判据（c1 校准 / c2 / c3 同窗帧标 / c4）
   - [ ] 跨机迁移：B 机 200 条 fine-tune 达从零训 90%（P5）
   - [ ] 影子五门禁 + 48h 金丝雀通过（P6/P7），论文初稿 + 答辩演示
 
@@ -27,17 +29,20 @@
   B 机待上线（i9 14900HX + 5060）。
 - 路线锁定：A 方案（监督代理模型 + 约束 BO，打底攒数据）→ B 方案（离线 RL，主 IQL，拔高）；
   M5 负载预测叠加；导师偏算法，方法章需 5 件套全厚度。
-- 当前状态（r27 实测 2026-10-14）：
-  - 实采 **48753 行 / 13.54h**（W0/AC 34944=9.71h、W1/AC 6902=1.92h、W2/AC 6907=1.92h），覆盖 **3/16**，interactive **0.142**；
-    采集 job **停于 2026-09-22 22:08**（非当前在跑）。
-  - 口径已修：r26 的 rollup 表 `D_safe_shadow_A.csv`（34481 行）与分片重复计 10352 键，
-    曾虚报 83234 行；已归档到 `artifacts/datasets/archive/`，统计器只读 `*_part*.csv`。
-  - perf 标链路 r27 打通：PresentMon 2.6.0 便携 + `tools/fps_join.py` 离后回填（录制期独占 CSV，不能并发读）；
-    smoke 实测 16/16 行填充，固定时钟偏移 −28796.9s（已自动重定基）。
+- 当前状态（r28 实测 2026-10-14）：
+  - 实采 **48753 行 / 13.54h**（W0/AC 9.71h、W1/AC 1.92h、W2/AC 1.92h），覆盖 **3/16**，interactive **0.142**；
+    采集 job 停于 2026-09-22 22:08（需用户真用机续采）。
+  - 口径已修（r27）：rollup 表双计归档，统计器只读 `*_part*.csv`。
+  - perf 标链路通（r27）：PresentMon 2.6.0 便携 + `fps_join.py` 离后回填（录制期独占 CSV，不能并发读）。
+  - **E4 影子链路已实现（r28）**：`tools/shadow_run.py`（遥测 + 真读 AC/DC + powercfg 方案 + State48 + stub 策略 + 围栏试算 + BlackBox + L2 dry-run 唯一路径）+ `tools/e4_shadow_report.py`（四项判据 + 覆盖矩阵 + open_items）。
+    smoke 实测：BlackBox 10/10、errors 0、timeouts 0、围栏 OK×10（0.0103ms）、`l2_mode=dry-run`、`acdc=AC`(真读) `soc 96%`、`scheme="节能"`；
+    `e4_ready=false`，`open_items=[c1, c3, coverage/plug hours short]`。
+  - 已知局限（逐行标注，不补齐）：CPU 温度通道 pre-E5 缺失 → 围栏输入用 `cpu_temp_src=proxy-gpu`；
+    `gear_actual=uncalibrated-scheme-only`；`policy_ver=stub-1`（无策略权重）。
   - live 因 E4/E5 门禁缺失继续锁定（用户小步确认 ΔPL≤5W/Δfreq≤100MHz 已记录，但铁律3要求门禁+确认双齐）。
 - 约束：全程 dry-run 默认；门禁不过不真实下发；公开仓库，禁 force-push。
-- 变更记录：2026-09-22 P4 从"合成验证"推进到"影子实采+合成压测"，STRESS合成行明确不进九宫格；
-  2026-10-14 r27 口径修正 + perf 标链路打通 + E4 缺口定性（瓶颈从时长转为影子 run 链路）。
+- 变更记录：2026-09-22 P4 合成链+实采+压测；2026-10-14 r27 口径修正 + perf 标链路 + E4 缺口定性；
+  2026-10-14 r28 E4 影子链路落地（四判据从"无链路"变为"可判"，c1 已有真实分歧证据）。
 
 ## 3. 总体计划
 
@@ -75,9 +80,9 @@
 | 10 | P4 B2锚/V12/包络干等价 | 单 Agent | 已完成 | B2 proxy锚71.4；四档4/4零违例；live锁E4/E5 |
 | 11 | P4 影子实采 part1–4（job 停于 09-22 22:08） | 单 Agent + 用户用机 | 暂停（3/16格，13.54h） | rows 48753；需续采补格 |
 | 12 | P4 口径修正 + perf 标链路 | 单 Agent | 已完成（r27） | commit 7bdf99f；fps_join 16/16 实测 |
-| 13 | P4 续采 part5+（W3–W7/DC/插拔）+ 帧标同窗 | 用户 + 单 Agent | 待办 | 命令见 docs/p4-gate-report.md §5 |
-| 14 | **P4 影子 run 链路（策略推理+围栏试算+BlackBox）+ E4 判据脚本** | 单 Agent | 待办 | E4 实质阻塞；见 §7 |
-| 15 | P4 真数三模型 + Return+10% → tag phase-04-done | 单 Agent | 待办 | 依赖 13+14 |
+| 13 | **P4 E4 影子链路（shadow_run + e4_shadow_report）** | 单 Agent | 已完成（r28） | commit 055392a；BlackBox 10/10、四判据可判、c1 已出真实分歧 |
+| 14 | P4 E4 解锁：Fn+Q 校准 + 影子同窗帧标 + 补格/DC/插拔 | 用户 + 单 Agent | 待办 | 命令见 docs/p4-gate-report.md §7 |
+| 15 | P4 真数三模型 + Return+10% → tag phase-04-done | 单 Agent | 待办 | 依赖 11+14 |
 | 16 | P5–P7 | 待定 | 待办 | 见 plans/ 各文件 |
 
 ## 6. 已完成步骤（已验证事实）
@@ -99,28 +104,27 @@
 - [x] P4 合成压测：180s torch matmul有界，192行STRESS标（不进九宫格）；验证：commit a7e19eb。
 - [x] P4 证据索引 + r26门禁对账；验证：commits 29c32ab/143b67a。
 - [x] requirements 锁定：lightgbm 4.7.0 + onnx 1.23.0 + onnxscript；验证：pip安装成功，ONNX导出通。
-- [x] P4 r27 口径修正 + 工具修复 + 帧标链路：coverage 只读分片（48753 真实行，interactive 0.142）；nvidia-smi DriverStore 回落；PresentMon 2.6.0 便携 + fps_join 离后回填（smoke 16/16，偏移 −28796.9s）；真数重跑 n12081 诚实入库（power 0.776 vs mean 6.463，比窄 idle 差，如实记）；验证：commit 7bdf99f/a02249d/7bdfeb2 + docs/p4-gate-report.md，pytest 45绿。
+- [x] P4 r27 口径修正 + 工具修复 + 帧标链路：coverage 只读分片（48753 真实行，interactive 0.142）；nvidia-smi DriverStore 回落；PresentMon 2.6.0 便携 + fps_join 离后回填（smoke 16/16，偏移 −28796.9s）；真数重跑 n12081 诚实入库；验证：commit 7bdf99f/a02249d/7bdfeb2 + docs/p4-gate-report.md，pytest 45绿。
+- [x] P4 r28 E4 影子链路：`tools/shadow_run.py`（六步全只读，live 无路径）+ `tools/e4_shadow_report.py`（四判据+覆盖矩阵+open_items）；smoke BlackBox 10/10、errors 0、timeouts 0、围栏 OK×10（0.0103ms）、真读 `acdc=AC`/`soc 96%`/`scheme="节能"`、`l2_mode=dry-run`；c1 带 `--gear-map` 出真实分歧 `agreement_rate 0.0`（影子 Balance vs 在运 Quiet）、c2 PASS（L2+=0）、c3 BLOCKED（无帧）、c4 PASS、`e4_ready=false`；验证：commit 055392a，pytest 45绿。
 
 ## 7. 进行中 / 下一步（新对话先干这个）
 
-- 当前卡点：① 实采停摆（09-22 22:08 后无新数据）② 覆盖 3/16 < 13/16 ③ E4 的**影子 run 链路未实现**（这才是 E4 真阻塞，不是时长）。
-- 下一步动作（按序，① ③ 可并行）：
-  1. **续采 + 帧标同窗**（用户真用机）：
-     - 补 W1/W2 各差 ~5 分钟 → 达 E4 的"办公≥2h / 游戏≥2h"；
-     - 轮转 W3 compile / W4 video-call / W5 render / W6 browser / W7 plug-flap + **DC 列（真拔电，顺带满足"≥1 次插拔电"）**；
-     - 三段式：PresentMon（`--timed` + `--session_name`）并行 → `collect_shadow --out part5.csv` → `fps_join.py --process <game.exe>`；
-     - 命令模板：`docs/p4-gate-report.md` §5 / `tools/presentmon/README.md`。
-  2. **E4 影子 run 链路**（单 Agent，本轮已定性为下一步核心）：
-     - `tools/shadow_run.py`：每 tick 同时 ① 遥测 ② surrogate 策略推理（`src/policy/surrogate.py`）③ 围栏试算（`src/guard/*`）④ BlackBox 记录（`src/blackbox/log.py`），全程 dry-run 不下发；
-     - `tools/e4_shadow_report.py`：一致率≥85% / L2+试算触发=0 / p95 同应用 ±5% / 零崩溃 四项统计。
-  3. 格 ≥13/16 且 perf 标齐 → `tools/pilot_real_train.py` 三模型真数对比 → Return+10% shield平 → 冻结 D_safe → tag phase-04-done。
+- 当前卡点：① 实采停摆（需用户真用机）② 覆盖 3/16 ③ E4 c1 缺 scheme→gear 校准 ④ E4 c3 缺同窗帧标 ⑤ 无真实插拔事件。
+- 下一步动作（① 是用户动作，其余可并行；命令模板见 `docs/p4-gate-report.md` §7）：
+  1. **Fn+Q 四档校准走一遍**（解锁 c1）：用户按 Fn+Q 循环时用
+     `1..40 | ForEach-Object { $s=(powercfg /GETACTIVESCHEME); $s.Substring($s.IndexOf('(')+1).TrimEnd(')'); Start-Sleep 2 }`
+     记下四档方案名 → `--gear-map "节能=Quiet,平衡=Balance,性能=Beast,极致=Extreme"`。
+  2. **影子 run 与 PresentMon 同窗**（解锁 c3）：`shadow_run.py --work W2 --fps-file pm.csv --fps-process <game.exe>`。
+  3. **补时长/格/插拔**：W1/W2 各差 ~5 分钟；W3 compile / W4 video-call / W5 render / W6 browser / W7 plug-flap + DC 列（真拔电）。
+  4. **E4 全绿后**：真数三模型（`tools/pilot_real_train.py`）→ Return+10% shield平 → 冻结 D_safe → tag phase-04-done。
 - 待验证假设：B 机 BIOS 未锁欠压（若锁则P5改子空间迁移）；B 机 WMI Extreme mode 值（R4预案）。
 
 ## 8. 待办步骤
 
-- [ ] 用户补格（W1/W2 各 5 分钟 + W3–W7 × AC/DC）+ 真实插拔事件 + PresentMon 帧标同窗
-- [ ] `tools/shadow_run.py` + `tools/e4_shadow_report.py`（E4 实质缺口）
-- [ ] E4 影子门禁（≥8h 有效覆盖 + 四项判据）→ E5 金丝雀 → 小步 live
+- [ ] Fn+Q 校准走档（scheme→gear 映射）→ c1 从 BLOCKED 变真实数字
+- [ ] 影子 run + PresentMon 同窗 → c3
+- [ ] 用户补格（W1/W2 各 5 分钟 + W3–W7 × AC/DC）+ 真实插拔事件
+- [ ] E4 全绿 → E5 金丝雀 → 小步 live
 - [ ] 真数三模型重训 + Return+10% 回放验证 + tag phase-04-done
 - [ ] P5 跨机迁移（需B机上线）→ P6 离线RL → P7 金丝雀+论文
 - [ ] 附带小事：`watcher.lock`（0字节）重启后随手删；LICENSE权利人占位 `yyhhqq1234`，毕设要真名则改；
@@ -147,12 +151,14 @@
 - 现象/坑：锁文件删不掉（WinError 32）；原因：残留句柄；正确做法：不硬删，换新文件续采（part2），旧文件冻结。
 - 现象/坑：合成行污染真数；原因：压测时实采job在跑；正确做法：压测前停实采job，合成行写D_stress_*（STRESS标，不进覆盖glob），事后声明+重启实采。
 - 现象/坑：单格窄分布训不出东西（n1147输均值）；原因：idle方差太小；正确做法：多格是硬需，不拿合成冒充。
-- 现象/坑：coverage 数字虚高（报 83234）；原因：glob `D_safe_shadow_A*.csv` 同时吃到分片与 rollup 总表（10352 键重复）；正确做法：统计器只读 `*_part*.csv`，rollup 归档到 `datasets/archive/`，别再往顶层写非 part 命名的采集文件（已加 WARN 守卫）。
-- 现象/坑：续采写入空值行；原因：617.14 驱动刷新后 `nvidia-smi` 离开 PATH（裸 `nvidia-smi` 报 CommandNotFound）；正确做法：采集器已回落 DriverStore 路径，人工核对该行打印的 nvidia-smi 路径。
-- 现象/坑：PresentMon 录制期读其 CSV 报 `[Errno 13] Permission denied`；原因：录制期独占句柄；正确做法：录制期只并行采集（fps 留空），停后 `tools/fps_join.py` 回填；别用 `--capture_seconds`（2.6.0 无此参数，用 `--timed`）。
-- 现象/坑：PresentMon `--date_time` 时间戳偏 +8h（实测 −28796.9s）；原因：时段/时区换算；正确做法：由 join 自动重定基到影子首行，偏移异常（未同时启动）时用 `--offset` 手工校正。
-- 现象/坑：dwm.exe 桌面合成帧混进游戏格；原因：PresentMon 默认捕全部进程（376fps 桌面帧）；正确做法：`--process_name` / `fps_join --process <game.exe>` 过滤。
-- 现象/坑：`D_safe_shadow_A.csv` 默认输出路径会重建 rollup；原因：collect_shadow 默认 OUT 指向顶层 rollup 名；正确做法：续采一律 `--out ..._part<N>.csv`（WARN 守卫会提示）。
+- 现象/坑：coverage 数字虚高（报 83234）；原因：glob `D_safe_shadow_A*.csv` 同时吃到分片与 rollup 总表（10352 键重复）；正确做法：统计器只读 `*_part*.csv`，rollup 归档 `datasets/archive/`，新增采集一律 `--out ..._part<N>.csv`（已加 WARN 守卫）。
+- 现象/坑：续采写入空值行；原因：617.14 驱动刷新后 `nvidia-smi` 离开 PATH；正确做法：采集器回落 DriverStore 路径，核对行内打印的 nvidia-smi 路径。
+- 现象/坑：PresentMon 录制期读其 CSV 报 `[Errno 13]`；原因：录制期独占句柄；正确做法：录制期只并行采集（fps 留空），停后 `tools/fps_join.py` 回填；2.6.0 无 `--capture_seconds`，用 `--timed`。
+- 现象/坑：PresentMon `--date_time` 时间戳偏 +8h（实测 −28796.9s）；正确做法：join 自动重定基，未同窗时用 `--offset` 校正。
+- 现象/坑：dwm.exe 桌面合成帧混进游戏格；原因：PresentMon 默认捕全部进程；正确做法：`--process_name` / `fps_join --process <game.exe>` 过滤。
+- 现象/坑：E4 判据假 PASS；原因：无校准时用"看起来一致"的默认值凑；正确做法：c1 无 `--gear-map` 一律 `BLOCKED`，`e4_ready` 只在四项全 PASS 且覆盖/插拔达标时为 true，绝不手改判据产物。
+- 现象/坑：CPU 温度 proxy 当真实值用；原因：pre-E5 无 CPU 温度通道；正确做法：每行写 `cpu_temp_src="proxy-gpu"`，论文与报告如实声明该局限（E5 前不解除）。
+- 现象/坑：shadow_run 误走 live；原因：误传 dry_run=False；正确做法：`l2_mutex.actuate` 在 dry_run=False 时直接 raise，任何改动不得放宽（铁律 4）。
 
 ## 10. 关键文件与修改
 
@@ -160,26 +166,29 @@
 - `specs/SYSTEM_SPEC_DRAFT_v1.0.md`：HAL/State48/Action7/Reward/包络（v1.0冻结）。
 - `docs/safety-fence-spec.md`：门禁细则（§5.2 E4 影子门禁四项判据）；`docs/thesis-proposal-outline.md`：V01–V24矩阵。
 - `src/state/state48.py`：State48构建（fill 0.167实测）；`src/blackbox/log.py`：BlackBox环。
-- `src/actuate/hal_map.py` + `src/actuate/l2_mutex.py`：档位换算 + 互斥（live门禁前拒绝）。
-- `src/guard/`：burst/shields/acdc；`src/policy/surrogate.py`：MLP+Ensemble（ASCII）；`src/sense/nvidia_poll.py` + `src/sense/wmi_events.py`（影子 run 将复用）。
-- `tools/run_p3_dryrun.py`：V01–V09；`tools/collect_shadow.py`：影子1Hz（15列，`--out`/`--fps-file`/`--fps-process`/`--fps-reload`）。
-- `tools/fps_join.py`（r27 新增）：PresentMon 帧标离后回填；`tools/presentmon/README.md`（exe 不入库）。
+- `src/actuate/hal_map.py` + `src/actuate/l2_mutex.py`：档位换算 + 互斥（live 门禁前 raise）。
+- `src/guard/`：burst/shields/acdc；`src/policy/surrogate.py`：MLP+Ensemble（ASCII）；`src/policy/stub.py`：静态包络策略；`src/sense/nvidia_poll.py` + `src/sense/wmi_events.py`。
+- `tools/shadow_run.py`（r28）：E4 影子 run（遥测+策略+围栏试算+BlackBox+L2 dry-run，全只读）。
+- `tools/e4_shadow_report.py`（r28）：E4 四判据 + 覆盖矩阵 + 插拔计数 + open_items（`--gear-map` 校准开关）。
+- `tools/run_p3_dryrun.py`：V01–V09；`tools/collect_shadow.py`：影子1Hz（`--out`/`--fps-file`/`--fps-process`/`--fps-reload`）。
+- `tools/fps_join.py`（r27）：PresentMon 帧标离后回填；`tools/presentmon/README.md`（exe 不入库）。
 - `tools/coverage_report.py`：16格监测（只读 `*_part*.csv`，rollup 排除告警）；`tools/repair_shadow.py`：混列修复归档。
 - `tools/make_dsafe_synth*.py` + `tools/train_p4_*.py` + `tools/bo_p4_synth.py` + `tools/cross_AB_synth.py`：合成链。
 - `tools/reward_baseline_B2.py`：V12 B2代理锚；`tools/pilot_real_train.py`：实试点。
 - `tools/gpu_stress.py`：有界合成负载（STRESS标，off-grid）；`tools/interactive_probe.py`：交互探针；`tools/plug_watch.py`：插拔watcher。
-- `docs/p4-collection-protocol.md` + `docs/p4-progress-synth.md` + `docs/p4-evidence-index.md` + `docs/p4-gate-report.md`（r27 新增）：P4文档链。
+- `docs/p4-collection-protocol.md` + `docs/p4-progress-synth.md` + `docs/p4-evidence-index.md` + `docs/p4-gate-report.md`：P4文档链。
 - `docs/p2-e3-drill-report.md` + `docs/hal-boot-sequence.md` + `docs/p3-gate-report.md`：P2/P3证据。
-- `artifacts/samples/`：合成AB、对比JSON、ONNX(0.02MB)、B2锚、包络、pilot等小样例（可进仓）。
-- `artifacts/datasets/`：实采大CSV（已ignore，永不进仓）：part1–4/锁文件/D_stress；`archive/`：r26 rollup + smoke 产物。
+- `artifacts/samples/`：合成AB、对比JSON、ONNX(0.02MB)、B2锚、包络、pilot 等小样例（可进仓）；E4 影子 run 产物与报告落此。
+- `artifacts/datasets/`：实采大CSV（已ignore，永不进仓）：part1–4/锁文件/D_stress；`archive/`：r26 rollup + r27/r28 smoke 产物。
 - 已废弃（tag可取回）：全部旧 `.bat/.ps1`、`ThrottleStop/` 等 legacy。
 
 ## 11. 验证方式
 
 - 仓库干净：`git status --porcelain` 空；远端同步：`git push` 通（502阵发则等60s重推）。
 - 阶段验收：按 `plans/PHASE-0x` §4 checklist 逐项贴证据，不许空勾；产物缺失 = 该格未执行。
-- 测试：`pytest tests/` 45绿；覆盖：`python tools/coverage_report.py`（读分片，报 rows/3格/interactive）。
-- 门禁：影子≥8h有效覆盖（游戏≥2h+办公≥2h+idle≥1h+≥1插拔电）/金丝雀48h/自动回滚五触发/LKG 60s；live需门禁+用户确认双齐。
+- 测试：`pytest tests/` 45绿；覆盖：`python tools/coverage_report.py`（读分片，报 rows/格数/interactive）。
+- 门禁：`python tools/e4_shadow_report.py`（四判据 + `e4_ready` + `open_items`；exit 2 = 未就绪，属正常）；
+  影子≥8h有效覆盖（游戏≥2h+办公≥2h+idle≥1h+≥1插拔电）/金丝雀48h/自动回滚五触发/LKG 60s；live 需门禁+用户确认双齐。
 - 模型指标：回放 Return +10%（P4）、迁移 200 条达 90%（P5）。
 - 帧标：`tools/fps_join.py` 回填后检查 fps/p95 填充行数与偏移打印（偏移异常=未同窗采集）。
 
@@ -192,4 +201,5 @@
 - 更新历史：
   - 2026-09-16：初建（P0待签字）。
   - 2026-09-22 16:01：大更新——P1/P2/P3封版（tags+03），P4合成链+实采+压测，门禁对账（rows-OK/grid-OPEN），live锁E4/E5。
-  - 2026-10-14 11:05：r27——口径修正（48753 真实行，rollup 双计归档）、nvidia-smi 回落、perf 标链路打通（PresentMon+fps_join，16/16）、真数 n12081 诚实入库、E4 阻塞重新定性为"影子 run 链路未实现"；commit 7bdf99f/a02249d/7bdfeb2 已推。
+  - 2026-10-14 11:05：r27——口径修正（48753 真实行）、nvidia-smi 回落、perf 标链路打通（16/16）、真数 n12081 诚实入库、E4 阻塞重新定性；commit 7bdf99f/a02249d/7bdfeb2/9dac337 已推。
+  - 2026-10-14 11:15：r28——E4 影子链路落地（shadow_run 六步 + e4_shadow_report 四判据），smoke BlackBox 10/10、c1 出真实分歧、c2/c4 PASS、c3 BLOCKED；commit 055392a 已推；下一步转 Fn+Q 校准 + 同窗帧标 + 补格。
