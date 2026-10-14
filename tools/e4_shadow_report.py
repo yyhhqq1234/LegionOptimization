@@ -49,8 +49,15 @@ def load_rows(pattern):
     return rows
 
 
-def cell_hours(shadow_glob, jsonl_rows):
-    """Per-cell hours from the real collector parts + shadow runs (1Hz rows)."""
+def cell_hours(shadow_glob, jsonl_rows, include_jsonl=False):
+    """Per-cell hours from the real collector parts.
+
+    r37: the shadow JSONL is NOT a coverage source by default. run_shadow_window runs the
+    collector and the shadow over the same seconds, and both record at 1Hz, so adding them
+    double counts the window (measured: the 2h game window reported 5.13h instead of 3.54h -
+    the same double-count class as the r27 rollup bug). Pass include_jsonl=True only for a
+    run where the collector was NOT also running.
+    """
     c = Counter()
     for p in sorted(glob.glob(str(ROOT / shadow_glob))):
         try:
@@ -60,10 +67,11 @@ def cell_hours(shadow_glob, jsonl_rows):
                         c[(r["work"], r["acdc"])] += 1
         except OSError:
             continue
-    for r in jsonl_rows:
-        w, a = r.get("work"), r.get("acdc")
-        if w and a in ("AC", "DC"):
-            c[(w, a)] += 1
+    if include_jsonl:
+        for r in jsonl_rows:
+            w, a = r.get("work"), r.get("acdc")
+            if w and a in ("AC", "DC"):
+                c[(w, a)] += 1
     return {f"{k[0]}/{k[1]}": round(v / 3600.0, 2) for k, v in sorted(c.items())}, c
 
 
@@ -104,6 +112,9 @@ def main():
     ap.add_argument("--gear-map", default="",
                     help='in-service scheme name -> gear, e.g. "节能=Quiet,平衡=Balance,高性能=Beast". '
                          'Without it criterion 1 stays BLOCKED (never a fabricated pass).')
+    ap.add_argument("--include-jsonl-hours", action="store_true",
+                    help="also count shadow JSONL rows as coverage (double counts when the "
+                         "collector ran in the same window)")
     ap.add_argument("--json-out", default="artifacts/samples/e4_shadow_report.json")
     args = ap.parse_args()
 
@@ -118,7 +129,7 @@ def main():
         print(f"no shadow rows matched {args.glob} (run tools/shadow_run.py first)")
         return 1
 
-    hours, _ = cell_hours(args.shadow_glob, rows)
+    hours, _ = cell_hours(args.shadow_glob, rows, args.include_jsonl_hours)
 
     # criterion 1: action agreement (only computable with a calibrated scheme->gear map)
     gears = Counter((r.get("policy") or {}).get("gear_desired") for r in rows)

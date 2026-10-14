@@ -6,7 +6,7 @@
       "W0/AC": 9.77,
       "W0/DC": 0.12,
       "W1/AC": 2.11,
-      "W2/AC": 5.13
+      "W2/AC": 3.54
     },
     "e4_requirements": [
       {
@@ -32,9 +32,9 @@
         "work": "W2",
         "required_h": 2.0,
         "hours_by_cell": {
-          "W2/AC": 5.13
+          "W2/AC": 3.54
         },
-        "hours_total": 5.13,
+        "hours_total": 3.54,
         "status": "PASS"
       }
     ],
