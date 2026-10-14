@@ -26,11 +26,12 @@ NAMESPACE = "root\\WMI"
 _PS_TIMEOUT_S = 15
 
 # mode value -> gear name. Operator-labelled on this box (Fn+Q walk):
-#   3   = Beast        (野兽模式, confirmed 2026-10-14 11:18)
-#   224 = Extreme      (超能模式, Legion's official custom mode; confirmed 2026-10-14 11:28, 0xE0)
-# Quiet / Balance values are still unlabelled - they must come from the same walk
-# (tools/gear_probe.py). Unknown modes are reported raw and left unmapped, never guessed.
-MODE_TO_GEAR = {3: "Beast", 224: "Extreme"}
+#   1   = Quiet        (安静模式,     confirmed 2026-10-14 11:29)
+#   3   = Beast        (野兽模式,     confirmed 2026-10-14 11:18)
+#   224 = Extreme      (超能模式, Legion official custom mode; confirmed 2026-10-14 11:28, 0xE0)
+# Balance is still unlabelled - it must come from the same walk (tools/gear_probe.py).
+# Unknown modes are reported raw and left unmapped, never guessed.
+MODE_TO_GEAR = {1: "Quiet", 3: "Beast", 224: "Extreme"}
 GEAR_TO_MODE = {v: k for k, v in MODE_TO_GEAR.items()}
 
 _SVC = None
