@@ -149,14 +149,20 @@ python tools\e4_shadow_report.py --gear-map "节能=Quiet,平衡=Balance,性能=
 - 本机只有一个策略版本（stub-1），自比无意义 → c1 = `BLOCKED-no-second-policy`（P6 引入新逻辑后才可算）。
 - "策略建议 vs 人工档位"降级为观察项 **c1b**（`OBSERVED`，不计入 `e4_ready`）：实测 6 行 rate 0.0（stub 建议 Balance vs 人工 Beast）。
 
-### 8.4 校准走档（待操作者动作）
+### 8.4 校准走档（2026-10-14 完成，四档齐全）
 
-probe 窗口内按 Fn+Q 走一圈即可补齐 `MODE_TO_GEAR`：
+操作者按 Fn+Q 走一圈 + 即时读数，实测映射（每档连读 3 次稳定，probe 日志同步无丢点）：
 
-```powershell
-python tools\gear_probe.py --seconds 180
-python tools\gear_probe.py --from-log artifacts\datasets\gear_probe.jsonl
-```
+| thermal_mode | gear | 官方叫法 |
+|---|---|---|
+| 1 | Quiet | 安静模式 |
+| 2 | Balance | 均衡模式 |
+| 3 | Beast | 野兽模式 |
+| 224 (0xE0) | Extreme | 超能模式（官方自定义） |
+
+- `part5` 有 26 行在映射补全前写入 `mode:2`（原始值记录，按"数据只追加"不回写；语义等价 `Balance`）。
+- 复现：`python tools\gear_probe.py --seconds 120`，窗口内按 Fn+Q；或
+  `python tools\gear_probe.py --from-log artifacts\datasets\gear_probe.jsonl` 看历史序列。
 
 ## 9. r30：档位标签审计（数据质量，实测）
 

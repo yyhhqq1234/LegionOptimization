@@ -25,13 +25,14 @@ CLASS = "LENOVO_GAMEZONE_DATA"
 NAMESPACE = "root\\WMI"
 _PS_TIMEOUT_S = 15
 
-# mode value -> gear name. Operator-labelled on this box (Fn+Q walk):
-#   1   = Quiet        (安静模式,     confirmed 2026-10-14 11:29)
-#   3   = Beast        (野兽模式,     confirmed 2026-10-14 11:18)
-#   224 = Extreme      (超能模式, Legion official custom mode; confirmed 2026-10-14 11:28, 0xE0)
-# Balance is still unlabelled - it must come from the same walk (tools/gear_probe.py).
-# Unknown modes are reported raw and left unmapped, never guessed.
-MODE_TO_GEAR = {1: "Quiet", 3: "Beast", 224: "Extreme"}
+# mode value -> gear name. Complete operator-labelled walk on this box (Fn+Q, 2026-10-14):
+#   1   = Quiet        (安静模式,  11:29)
+#   2   = Balance      (均衡模式,  11:34)
+#   3   = Beast        (野兽模式,  11:18)
+#   224 = Extreme      (超能模式, Legion official custom mode, 0xE0; 11:28)
+# Every label was confirmed by the operator AND re-read 3x (stable) AND cross-checked in the
+# gear_probe log. Modes outside this table are reported raw as mode:<n> and never guessed.
+MODE_TO_GEAR = {1: "Quiet", 2: "Balance", 3: "Beast", 224: "Extreme"}
 GEAR_TO_MODE = {v: k for k, v in MODE_TO_GEAR.items()}
 
 _SVC = None
