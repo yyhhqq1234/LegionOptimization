@@ -1,0 +1,16 @@
+{
+  "ticks": 438,
+  "blackbox_ok": 438,
+  "errors": 0,
+  "timeouts": 0,
+  "fence_l1": 0,
+  "fence_l2": 0,
+  "fence_l3": 0,
+  "fence_ok": 438,
+  "work": "W0",
+  "policy_ver": "stub-1",
+  "blocked": "",
+  "blackbox_complete": "438/438",
+  "seconds": 600,
+  "fps_note": "no --fps-file"
+}
