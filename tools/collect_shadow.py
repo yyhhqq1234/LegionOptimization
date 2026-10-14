@@ -130,6 +130,23 @@ def _parse_time(cell):
     return 0.0, ""
 
 
+def _app_match(app, want):
+    """Application-column match: exact, with .exe, or stem-equal.
+
+    PresentMon's Application column carries the file name (e.g. "ff7rebirth_.exe"), so a
+    --process value without the extension would match nothing and the whole window would
+    come back with zero frame labels (r37: a 2h game window was lost that way and had to be
+    re-joined). Accepting the stem form keeps the CLI forgiving without loosening the filter.
+    """
+    if not want:
+        return True
+    a = (app or "").strip().lower()
+    w = want.strip().lower()
+    if a == w or a == w + ".exe":
+        return True
+    return a.rsplit(".", 1)[0] == w
+
+
 def load_presentmon(path, wall0, process="", rebase_floor=120.0):
     """PresentMon CSV -> ([(epoch_seconds, frame_ms)], note).
 
@@ -155,7 +172,7 @@ def load_presentmon(path, wall0, process="", rebase_floor=120.0):
             raw = []
             numeric = False
             for r in rd:
-                if want and ac and (r.get(ac, "") or "").strip().lower() != want:
+                if ac and want and not _app_match(r.get(ac, ""), want):
                     continue
                 t, kind = _parse_time(r.get(tc, ""))
                 if not kind:

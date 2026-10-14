@@ -1,0 +1,16 @@
+{
+  "ticks": 5719,
+  "blackbox_ok": 5719,
+  "errors": 0,
+  "timeouts": 0,
+  "fence_l1": 2632,
+  "fence_l2": 0,
+  "fence_l3": 0,
+  "fence_ok": 877,
+  "work": "W2",
+  "policy_ver": "stub-1",
+  "blocked": "",
+  "blackbox_complete": "5719/5719",
+  "seconds": 7200,
+  "fps_note": "no --fps-file"
+}

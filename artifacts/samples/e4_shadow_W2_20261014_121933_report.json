@@ -1,0 +1,109 @@
+{
+  "generated_from": "artifacts/samples/e4_shadow_W2_20261014_121933.jsonl",
+  "rows": 5719,
+  "coverage": {
+    "cells": {
+      "W0/AC": 9.77,
+      "W0/DC": 0.12,
+      "W1/AC": 2.11,
+      "W2/AC": 5.13
+    },
+    "e4_requirements": [
+      {
+        "work": "W0",
+        "required_h": 1.0,
+        "hours_by_cell": {
+          "W0/AC": 9.77,
+          "W0/DC": 0.12
+        },
+        "hours_total": 9.89,
+        "status": "PASS"
+      },
+      {
+        "work": "W1",
+        "required_h": 2.0,
+        "hours_by_cell": {
+          "W1/AC": 2.11
+        },
+        "hours_total": 2.11,
+        "status": "PASS"
+      },
+      {
+        "work": "W2",
+        "required_h": 2.0,
+        "hours_by_cell": {
+          "W2/AC": 5.13
+        },
+        "hours_total": 5.13,
+        "status": "PASS"
+      }
+    ],
+    "plug_events": 1,
+    "plug_rows": [
+      {
+        "timestamp": "2026-10-14T12:11:13.176",
+        "event": "plug-in",
+        "battery_status": "2",
+        "charge_pct": "84"
+      }
+    ]
+  },
+  "c1_action_agreement": {
+    "shadow_gear_distribution": {
+      "Balance": 5719
+    },
+    "in_service_scheme_distribution": {
+      "\u8282\u80fd": 454,
+      "\u9ad8\u6027\u80fd": 5265
+    },
+    "scheme_changes": 1,
+    "required": "agreement >= 85%",
+    "status": "BLOCKED",
+    "reason": "no second policy version to compare against (in-service == shadow == stub-1)",
+    "note": "criterion 1 needs a new logic vs the in-service policy at P6; shadow-vs-manual gear is c1b, informational"
+  },
+  "c1b_shadow_vs_manual_gear": {
+    "status": "OBSERVED",
+    "shadow_vs_manual_gear_rate": 0.0,
+    "counted_rows": 5719,
+    "gear_distribution": {
+      "Beast": 5719
+    },
+    "note": "informational only: manual gear is not the in-service policy output"
+  },
+  "c2_trial_trip_rate": {
+    "status": "PASS",
+    "levels": {
+      "OK": 877,
+      "WARN": 2210,
+      "L1": 2632
+    },
+    "ticks": 5719,
+    "l1_plus_rate": 0.4602,
+    "l2_plus_count": 0,
+    "required": "L2+ trial trips == 0; L1+ <= in-service + 2pp",
+    "in_service_trip_rate": "BLOCKED-no-live-baseline",
+    "l2_plus_rows": []
+  },
+  "c3_fluency_neutral": {
+    "status": "BLOCKED",
+    "reason": "E4 shadow is dry-run (zero actuation): shadow and in-service share the same physical state, so there is nothing to differ; testable only once actuation is live (E5 canary)",
+    "required": "shadow window p95 within +-5% of the same-period in-service p95"
+  },
+  "c3b_window_spread": {
+    "status": "BLOCKED",
+    "reason": "no frame labels in the shadow rows"
+  },
+  "c4_zero_crash": {
+    "status": "PASS",
+    "errors": 0,
+    "budget_overruns": 0,
+    "slow_ticks_gt_1.5s": 1,
+    "required": "zero exception, zero 50ms inference overrun"
+  },
+  "e4_ready": false,
+  "open_items": [
+    "c1_action_agreement",
+    "c3_fluency_neutral"
+  ]
+}
