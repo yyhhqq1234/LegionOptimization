@@ -124,8 +124,8 @@
 
 ## 7. 进行中 / 下一步（新对话先干这个）
 
-- 当前卡点：① E4 需真负载同窗采（游戏≥2h / 办公≥2h / idle≥1h / ≥1 插拔电）② 覆盖 3/16（缺 DC 列与 W3–W7）
-  ③ c1 需 P6 第二策略才有意义 ④ real_pilot perf head 仍待重训。
+- 当前卡点（r35 实测更新）：① **E4 覆盖只剩游戏 ≥2h**（W2/AC 1.92h，差 ~5 分钟）；idle ✅ 10.01h、办公 ✅ 2.11h、插拔 ✅ 1 次（12:11:13 `plug-in`）
+  ② 九宫格 4/16（coverage 0.25，interactive 0.151）③ c1/c3 属 P6/E5 判据（E4 dry-run 阶段原理上不可测）。
 - 下一步动作（① 是用户动作，其余可并行；命令已就绪）：
   1. **跑真负载时一键同窗**（游戏/渲染，解锁 c3 正式证据 + 补 W2/W5 格）：
      `python tools\run_shadow_window.py --seconds 1800 --work W2 --process <game.exe> --report`

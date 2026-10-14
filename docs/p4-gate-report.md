@@ -249,5 +249,22 @@ python tools\e4_shadow_report.py --gear-map "节能=Quiet,平衡=Balance,性能=
 
 DC 段实测（本轮）：`part7` 行 `W0,DC,Balance,...`（真读 4.78W/43°C）；影子侧 `acdc_sensed=DC`、`soc 96`、围栏 OK。
 
+## 12. E4 覆盖面清单（2026-10-14 实测）
+
+| fence E4 要求 | 实测 | 判定 |
+|---|---|---|
+| idle ≥1h | W0/AC 9.77h + W0/DC 438 行 → W0 **10.01h** | ✅ |
+| 办公 ≥2h | W1/AC **2.11h** | ✅ |
+| 游戏 ≥2h | W2/AC **1.92h** | ❌ 差 ~5 分钟（~290 行） |
+| ≥1 次插拔电 | `plug-in` **2026-10-14T12:11:13**（status 1→2，电池 84%） | ✅ |
+
+- 九宫格：**4/16**（W0/AC、W0/DC、W1/AC、W2/AC 各 ≥80 行），coverage **0.25**，interactive **0.151**。
+- DC 段：`part7` = 438 行 `W0,DC,Balance`（真档位标签）；影子 DC 段 438/438 BlackBox、errors 0。
+- 插拔判据（r34 收紧后）：`plug_events = 1`；旧 watcher 写下的 `power-change` 噪声行一律不计入。
+- 剩余缺项：**W2 游戏时长 5 分钟**；W3–W7 与其余 DC 列为加分项（非 E4 硬要求）。
+
+**c1/c3 在 P4 内的正确状态**：`BLOCKED`（c1 缺第二策略版本；c3 因 dry-run 零作动无可比对象），
+两者均属 P6 影子阶段 / E5 金丝雀阶段判据，不得在 P4 内报 PASS 或 FAIL。
+
 
 
