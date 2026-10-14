@@ -30,9 +30,13 @@ c = Counter((r["work"], r["acdc"]) for r in rows)
 cells = {(w, a): c.get((w, a), 0) for w in WORKS for a in ("AC", "DC")}
 covered = sum(1 for v in cells.values() if v >= CELL_TARGET)
 inter = sum(1 for r in rows if r.get("work") in ("W1", "W6"))
+# r32: the gear column only became an observation at part5 (--sense-gear); earlier parts hold
+# a constant label. Report the distribution so the gear dimension's real coverage is visible.
+gear = Counter((r.get("gear_readonly") or "").strip() or "<empty>" for r in rows)
 out = {"rows": len(rows), "cells": {f"{k[0]}/{k[1]}": v for k, v in sorted(cells.items())},
        "covered_ge80": covered, "coverage": round(covered / 16, 3),
        "interactive_ratio": round(inter / len(rows), 3) if rows else 0.0,
+       "gear_distribution": dict(gear.most_common()),
        "target_per_cell": CELL_TARGET, "synthetic": False}
 print(json.dumps(out, indent=1))
 missing = [k for k, v in sorted(cells.items()) if v < CELL_TARGET]

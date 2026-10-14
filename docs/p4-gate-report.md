@@ -187,6 +187,8 @@ python tools\e4_shadow_report.py --gear-map "节能=Quiet,平衡=Balance,性能=
    故"切换时刻即标签边界"这一约束在后续采集里可自动化。
 5. 补救路径：后续采集一律带 `--sense-gear`；若要档位分组的真数，需按 G×W 组合补采
    （成本高，P4 内优先保证关键档位有真标签样本：G0 Quiet / G2 Beast / G4 Extreme）。
+6. `tools/coverage_report.py` 自 r32 起额外输出 `gear_distribution`，使档位维度的真实覆盖可见
+   （当轮实测：`Balance-readonly` 48753 常量 / `mode:2` 124 / `Quiet` 104 / `Balance` 46 真标签）。
 
 
 
