@@ -51,6 +51,9 @@ artifacts/*
 tools/presentmon/*.exe
 tools/presentmon/*.zip
 
+# P4 r30: PresentMon 原始帧 CSV 是大文件（一次窗口 3MB+），只留影子 JSONL 与报告样例
+artifacts/samples/pm_*.csv
+
 # 本地私有内容（AGENTS.md 铁律 10：新增私有内容必须即时补 ignore）
 *.local.*
 *.private.*
