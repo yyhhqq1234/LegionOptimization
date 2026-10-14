@@ -13,6 +13,11 @@
   inflated the report to 83234; archived to `datasets/archive/`, counts are part-only now.
 - Missing: W3-W7 x AC/DC rotation, real plug event (`tools/plug_watch.py` ready), and the
   E4 shadow-run link (see §6) — perf labels chain is ready (§5).
+- **r30 label audit**: part1-4 `gear_readonly` is the constant `Balance-readonly`
+  (48753/48753 rows) = the gear dimension is NOT observed in that data, so it supports no
+  gear-grouped supervision and no four-gear envelope evidence. Real gear labels start at
+  part5 via `--sense-gear`; `work` labels are operator-set CLI arguments with no independent
+  witness. See `docs/p4-gate-report.md` §9.
 
 ## 2. Three-model compare (DONE-syn; real rerun honest-partial)
 - MLP val 0.08, RMSE 3.23/2.94/1.74, tau 0.815; LGB 2.88/2.11/1.70 (honest: LGB wins on synth); ENS undertrained.

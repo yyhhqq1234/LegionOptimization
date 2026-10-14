@@ -158,4 +158,29 @@ python tools\gear_probe.py --seconds 180
 python tools\gear_probe.py --from-log artifacts\datasets\gear_probe.jsonl
 ```
 
+## 9. r30：档位标签审计（数据质量，实测）
+
+逐 part 统计 `gear_readonly` 列（2026-10-14 实测）：
+
+| part | 行数 | 档位标签分布 |
+|---|---|---|
+| part1 | 508 | `Balance-readonly` × 508 |
+| part2 | 34436 | `Balance-readonly` × 34436 |
+| part3 | 6902 | `Balance-readonly` × 6902 |
+| part4 | 6907 | `Balance-readonly` × 6907 |
+| **part1–4 合计** | **48753** | **`Balance-readonly` 48753 / 48753 = 100%（常量）** |
+| part5（r29 起，`--sense-gear`） | 64+ | `Quiet`（真读） |
+
+结论（诚实声明，须进论文数据质量节）：
+
+1. **part1–4 的档位维度是常量，不是档位观测** —— 不能用于"档位 × 负载"分组的监督样本，
+   也不能作为包络四档的真数证据（B2 四档目前仍只有干等价）。
+2. `work` 标签同为人工命令行参数，无独立佐证，只能声明为"采集时会话标注"。
+3. 真档位标签自 **part5** 起生效（`GetThermalMode` 真读）；未映射档位写 `mode:<n>`（不猜）。
+4. 档位切换事件可捕获（probe 实测 11:18:19→3、11:26:52→224、11:29:25→1，无丢点），
+   故"切换时刻即标签边界"这一约束在后续采集里可自动化。
+5. 补救路径：后续采集一律带 `--sense-gear`；若要档位分组的真数，需按 G×W 组合补采
+   （成本高，P4 内优先保证关键档位有真标签样本：G0 Quiet / G2 Beast / G4 Extreme）。
+
+
 
