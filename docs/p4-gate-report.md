@@ -224,5 +224,30 @@ python tools\e4_shadow_report.py --gear-map "节能=Quiet,平衡=Balance,性能=
 **副产品（有诊断价值）**：办公/浏览类别在同一 15 分钟窗口内 p95 从 22ms 漂到 38ms，
 说明该类别窗口内负载不平稳 —— 后续 c3 的"同应用类别"分层必须在**同一时间片内**对比，不能跨时段取基线。
 
+## 11. r34：插拔事件判据收紧（防假达标）
+
+现象：r33 时代的 `plug_watch.py` 把电量波动也写成 `power-change`，而
+`e4_shadow_report.plug_events()` 把所有非 `watch-start` 行都计为插拔事件
+→ **电量掉 1% 就能满足 fence 的"≥1 次插拔电"**，属假达标。
+
+实测（2026-10-14 拔电后启动 watcher）：
+
+```
+2026-09-22T15:36:05.422,watch-start,2,95    ← 9-22 AC 状态（上一次 watcher 运行）
+2026-10-14T12:00:58.629,watch-start,1,96    ← 今日 DC（拔电）状态
+2026-10-14T12:01:04.154,power-change,1,95   ← 仅电量 96→95，**非插拔**
+```
+
+修正：
+
+1. `tools/plug_watch.py`：只把 `Win32_Battery.BatteryStatus` 的**状态切换**记为事件
+   （`plug-in` = 出现 AC/status 2；`unplug` = 落到 DC/status 1）；电量漂移单独记为 `charge-change`。
+2. `tools/e4_shadow_report.py` `plug_events()`：只统计 `plug-in / unplug / ac-lost / ac-restored`；
+   `charge-change` / `power-change` 一行都不算入插拔证据。
+3. 诚实标注：9-22 至今日之间的那次拔电**未被记录**（当时 watcher 未运行），不计入证据；
+   有效插拔事件自本次新 watcher 起记录。
+
+DC 段实测（本轮）：`part7` 行 `W0,DC,Balance,...`（真读 4.78W/43°C）；影子侧 `acdc_sensed=DC`、`soc 96`、围栏 OK。
+
 
 

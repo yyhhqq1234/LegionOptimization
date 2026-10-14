@@ -68,12 +68,19 @@ def cell_hours(shadow_glob, jsonl_rows):
 
 
 def plug_events():
+    """Count REAL plug transitions only (r34).
+
+    Only a battery-status transition counts: plug-in / unplug (and their legacy spellings).
+    charge-change / power-change rows are battery-percent drift -- counting them would let a
+    1% drop satisfy ">=1 plug event", i.e. a fabricated pass, so they are ignored here.
+    """
     if not PLUG_CSV.exists():
         return 0, []
     evs = []
     with open(PLUG_CSV, newline="", encoding="utf-8", errors="replace") as f:
         for r in csv.DictReader(f):
-            if (r.get("event") or "").strip() not in ("", "watch-start"):
+            ev = (r.get("event") or "").strip().lower()
+            if ev in ("plug-in", "unplug", "ac-lost", "ac-restored"):
                 evs.append(r)
     return len(evs), evs
 
