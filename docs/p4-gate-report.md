@@ -376,5 +376,58 @@ DC 段实测（本轮）：`part7` 行 `W0,DC,Balance,...`（真读 4.78W/43°C�
 `artifacts/samples/real_models.json`：两组模型的 RMSE + 均值基线 + 行数 + 分层（按 work/gear），
 替代旧的 `real_pilot.json` 单向记录（旧文件保留为历史）。
 
+## 16. r39：part9（W1 × Beast × 高性能）入库 —— 采集达标恢复
+
+| 项 | 值 |
+|---|---|
+| part9 | **1027 行** `W1/AC/Beast/高性能`（14:37–14:57） |
+| W1/AC 累计 | **8616 行 = 2.39h** |
+| rows 总计 | 56966 |
+| **interactive_ratio** | **0.151 ≥ 0.15** ✅ 采集达标恢复 |
+| 九宫格 | 4/16（coverage 0.25） |
+| gear 分布 | Beast 6860 / Balance 1125 / mode:2 124 / Quiet 104 / `Balance-readonly` 48753（常量） |
+
+**对照组价值**：part9（W1 × Beast × 高性能）与 part6（W1 × Balance × 节能）构成
+**同负载跨档位/跨电源方案**样本对，可直接用于论文的「环境协变量」与包络交叉验证章节。
+
+## 17. r40：真数三模型对比（MLP / LightGBM / 5-Ensemble），含一个诚实的负结果
+
+- 工具：`tools/train_real_models.py`（真数特征，非合成；7:1:2 划分；两组分开训练与报告）
+- 产物：`artifacts/samples/real_three_model.json`、`predictor_real_A_telemetry.onnx`、`predictor_real_B_framelabel.onnx`
+- 特征现实（已在代码与产物中标注）：`cpu_util` 真数**缺失**（pre-E5 无通道）；`pl1_w` 未直采，
+  组 B 用 `GEAR_PL_W[gear]` 作**档位换算代理**；perf 头用**帧标 fps**（真数无 `perf_score`）；
+  gear 为常量的旧行按构造被排除出组 B。
+
+### 组 A：遥测全量 56966 行 → (power, temp)
+
+| 模型 | RMSE power / temp |
+|---|---|
+| MLP | 39.642 / 14.831 |
+| **LightGBM** | **11.660 / 17.494** |
+| Ensemble5 | 35.946 / 13.044 |
+| 均值基线 | 54.654 / 22.462 |
+
+→ LGB 在 power 上降 **78.7%**；temp 仅降 **22.1%**（弱）。MLP 在 4 维特征 + rank_loss 下明显欠拟合。
+
+### 组 B：帧标子集 6135 行 → (fps, power, temp)
+
+| 模型 | RMSE fps / power / temp |
+|---|---|
+| MLP | 25.757 / 3.283 / 1.389 |
+| **LightGBM** | **7.478 / 3.122 / 1.131** |
+| Ensemble5 | 18.112 / 6.394 / 2.285 |
+| 均值基线 | **5.338** / 13.115 / 5.504 |
+
+- power：三模型全胜基线（LGB 降 **76.2%**）
+- temp：三模型全胜基线（LGB 降 **79.4%**）
+- **fps：三模型全部输给均值基线（5.338 < 7.478）—— 负结果，如实记录。**
+  判读：游戏窗口帧 p95 高度稳定（中位 6.28ms），**均值即强预测器**；模型缺"应用/场景/画质/CPU"等未采变量。
+  不得拿它当"性能预测已达标"的证据；P5/P6 需引入帧率相关特征或改用分位/分类建模。
+
+### ONNX（真数版）
+
+`predictor_real_A_telemetry.onnx` **0.02MB / 0.019ms**；`predictor_real_B_framelabel.onnx` **0.02MB / 0.013ms**
+→ 均满足 <10MB / <5ms（仍是"状态→观测量关联模型"，非 f(s,a)，见 §15.2）。
+
 
 

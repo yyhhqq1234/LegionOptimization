@@ -1,0 +1,90 @@
+{
+  "synthetic": false,
+  "feature_notes": {
+    "cpu_util": "MISSING in real collection (no channel pre-E5) - not used",
+    "pl1_w": "not sampled; group B uses GEAR_PL_W[gear] as a labelled proxy",
+    "perf_head": "fps from frame labels (group B only); no perf_score exists in real data",
+    "gear_column": "legacy constant rows are excluded from group B by construction"
+  },
+  "groups": [
+    {
+      "name": "A_telemetry",
+      "rows": 56966,
+      "in_dim": 4,
+      "out_dim": 2,
+      "mlp_rmse": [
+        39.642,
+        14.831
+      ],
+      "mlp_mae": [
+        34.0,
+        12.916
+      ],
+      "mean_baseline": [
+        54.654,
+        22.462
+      ],
+      "tau_head0": -0.041,
+      "ens_rmse": [
+        35.946,
+        13.044
+      ],
+      "ens_unc_mean": 0.04596,
+      "ens_p95_over": 43.192,
+      "lgb_rmse": [
+        11.66,
+        17.494
+      ],
+      "lgb_mae": [
+        9.199,
+        13.568
+      ],
+      "onnx_mb": 0.02,
+      "onnx_lat_ms": 0.019,
+      "status": "ok"
+    },
+    {
+      "name": "B_framelabel",
+      "rows": 6135,
+      "in_dim": 6,
+      "out_dim": 3,
+      "mlp_rmse": [
+        25.757,
+        3.283,
+        1.389
+      ],
+      "mlp_mae": [
+        14.369,
+        2.169,
+        0.889
+      ],
+      "mean_baseline": [
+        5.338,
+        13.115,
+        5.504
+      ],
+      "tau_head0": 0.093,
+      "ens_rmse": [
+        18.112,
+        6.394,
+        2.285
+      ],
+      "ens_unc_mean": 0.02143,
+      "ens_p95_over": 195.363,
+      "lgb_rmse": [
+        7.478,
+        3.122,
+        1.131
+      ],
+      "lgb_mae": [
+        6.957,
+        1.62,
+        0.811
+      ],
+      "onnx_mb": 0.02,
+      "onnx_lat_ms": 0.013,
+      "status": "ok"
+    }
+  ],
+  "generated_at": "2026-10-14T14:59:23"
+}
