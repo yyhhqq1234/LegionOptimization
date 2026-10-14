@@ -280,6 +280,7 @@ def main():
           f"sense-gear={'on' if args.sense_gear else 'off'}; scheme={'off' if args.no_scheme else 'on'}; "
           f"cpu={'off' if args.no_cpu else 'on'}")
     last_reload = time.time()
+    cache_scheme, cache_cpu = "", ""     # r43: slow variables cached to keep the 1Hz cadence
     with out_path.open("a", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         if new:
@@ -297,8 +298,14 @@ def main():
                     print(f"  fps reload: +{len(series) - before} frames ({note})")
             g = snap_gpu()
             gear = real_gear(args.gear) if args.sense_gear else args.gear
-            scheme = "" if args.no_scheme else snap_scheme()
-            cpu = "" if args.no_cpu else snap_cpu_util()
+            # r43: scheme and cpu are slow variables. Polling them every tick added ~0.8s per
+            # tick (600s produced only 335 rows, i.e. 0.56Hz instead of 1Hz). They are cached
+            # now: scheme refreshes every 10th tick, cpu every 5th.
+            if not args.no_scheme and (n % 10 == 0 or cache_scheme == ""):
+                cache_scheme = snap_scheme()
+            if not args.no_cpu and (n % 5 == 0 or cache_cpu == ""):
+                cache_cpu = snap_cpu_util()
+            scheme, cpu = cache_scheme, cache_cpu
             fps, p95 = fps_window([(t, v) for t, v in series.items()],
                                   now.timestamp()) if series else ("", "")
             w.writerow([now.isoformat(timespec="milliseconds"),

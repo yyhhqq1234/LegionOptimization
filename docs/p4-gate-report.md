@@ -489,5 +489,35 @@ W3 编译首次采集（part10）实测：`GPU util 0% / 180MHz / 4.36W / 51°C`
 
 `--work W3 --acdc AC --sense-gear` 与强编译负载同窗；行含 `cpu_util`、`gear=Beast`、`scheme=高性能`。
 
+## 20. r43：采样率修复 + 两个平台性发现（iGPU 分流 / 独显被第三方占用）
+
+### 20.1 采样率退化（已修）
+
+加入 `cpu_util` 后，每 tick 多一次 powershell 调用（~0.4s）+ `scheme`（~0.4s）
+→ 实测 600s 只产出 **335 行（0.56Hz，而非 1Hz）**，会破坏与早期 1Hz 数据的可比性。
+
+处置：慢变量改为**缓存轮询**（`scheme` 每 10 tick、`cpu` 每 5 tick）→ 每 tick 只剩 nvidia-smi（~60ms），恢复 ~1Hz。
+（`--no-scheme` / `--no-cpu` 仍可完全关闭。）
+
+### 20.2 平台性发现①：浏览器/轻负载走 iGPU，独显遥测看不见
+
+WebGL 持续渲染页实测：msedge CPU 0.34 核（静态页仅 0.05 核），而 `nvidia-smi` 恒为
+`0% / 4.56W / 56°C / 180MHz`；`nvidia-smi --query-compute-apps` 的独显进程列表中**没有 msedge**。
+
+含义：**W1/W3/W6/W7 等轻 GPU 格子在独显通道上缺乏分辨力** —— 其可用特征主要是 `cpu_util` 与交互指标。
+论文「传感通道局限」章节必须写明这一点，并说明何类负载才激活独显（W2 游戏 / W4 会议 / W5 渲染）。
+这也是 W1（part6，power 3.9–4.0W）与 W0（4.3–4.8W）在 GPU 侧几乎相同的真实原因，不是采集错误。
+
+### 20.3 平台性发现②：第三方程序持有独显上下文
+
+`nvidia-smi --query-compute-apps` 里出现 **LM Studio**（PID 20252），非本项目负载，
+但会占用独显上下文/显存，可能干扰 GPU 遥测（尤以低负载区与显存读数为主）。
+
+处置：记录为环境干扰项；采集出现异常值时先排查它；**不擅自终止用户进程**。
+
+### 20.4 W6/AC 采集（part12）
+
+`--work W6 --acdc AC --sense-gear`，与浏览器持续渲染负载同窗；标签真读（`gear=Beast`、`scheme=高性能`）。
+
 
 
