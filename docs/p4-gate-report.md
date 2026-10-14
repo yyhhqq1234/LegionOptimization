@@ -69,9 +69,50 @@ python tools\collect_shadow.py --seconds 3600 --work W0 --acdc DC --out artifact
 python tools\coverage_report.py
 ```
 
-## 6. 待办（下一轮，E4 实质缺口）
+## 6. E4 影子链路（r28 已实现，实测证据）
 
-- [ ] `tools/shadow_run.py`：每 tick 同时 ① 遥测 ② surrogate 策略推理（`src/policy/surrogate.py`）
-      ③ 围栏试算（`src/guard/*`）④ BlackBox 记录（`src/blackbox/log.py`）—— 全程 dry-run，不下发。
-- [ ] `tools/e4_shadow_report.py`：一致率 / L2+ 试算触发 / p95 差 ±5% / 零崩溃 四项统计。
-- [ ] 补 W1/W2 各 5 分钟 + DC 列 + 真实插拔事件（`tools/plug_watch.py` 已就绪）。
+两个新工具把 E4 从"只能判时长"变成"能判四项判据"：
+
+| 工具 | 职责 | 实测证据 |
+|---|---|---|
+| `tools/shadow_run.py` | 每 tick：① nvidia-smi 遥测 ② **真读** AC/DC（`GetSystemPowerStatus`，非标签）③ powercfg 活动方案（在运基线信号）④ State48 ⑤ stub 策略 → Action7（`hal_map`）⑥ 围栏试算（`shields.judge`）⑦ `l2_mutex.actuate(dry_run=True)`——唯一路径，live 直接 raise ⑧ BlackBox 12 字段 + JSONL/summary | 10 ticks：`blackbox 10/10 complete`、`errors 0`、`timeouts 0`、围栏 OK×10（0.0103ms）、`l2_mode="dry-run"`、`acdc="AC"`(真读) `soc 96%` `scheme="节能"` |
+| `tools/e4_shadow_report.py` | 四项判据（一致率 / L1+/L2+ 试算 / p95±5% / 零崩溃）+ E4 覆盖矩阵与插拔计数 + `open_items` | 见下 |
+
+**判据实测（smoke，非有效样本）**
+
+| 判据 | 结果 |
+|---|---|
+| c1 动作一致率 ≥85% | 无映射 → `BLOCKED`（宁可 BLOCKED 不假 PASS）；带 `--gear-map "节能=Quiet,平衡=Balance"` → `FAIL, agreement_rate 0.0, counted_rows 6`——影子建议 Balance，在运为 Quiet（真实分歧，正是 E4 要看的东西） |
+| c2 试算跳闸（L2+ 必须 0） | `PASS`，L2+ = 0，L1+ rate 0.0 |
+| c3 流畅中性 p95±5% | `BLOCKED`（影子行无帧标；需 `--fps-file` 同窗） |
+| c4 零崩溃 | `PASS`，errors 0 / 预算超时 0 / 慢 tick 0 |
+| 覆盖矩阵 | idle W0/AC 9.71h `PASS`；办公 W1 1.92h / 游戏 W2 1.92h `SHORT`；插拔 0 |
+| `e4_ready` | `false`，`open_items = [c1, c3, coverage/plug hours short]` |
+
+**诚实标注（写进每一行，不补齐）**：CPU 温度通道 pre-E5 不存在 → 围栏输入用 GPU 温度作 `cpu_temp_src="proxy-gpu"` 代理；
+`gear_actual="uncalibrated-scheme-only"`；`policy_ver="stub-1"`（无策略权重，请求 `--policy surrogate` 记 `BLOCKED-no-policy-weights`）；
+State48 `fill_rate 0.125`（只剩 GPU 侧有效位，CPU/mem 标缺失 valid=0）。
+
+## 7. 剩余解锁路径（E4 从 false 到 true）
+
+```powershell
+# ① 校准 scheme -> gear 映射（用户按 Fn+Q 循环四档，同时跑这条看方案名）
+1..40 | ForEach-Object { $s=(powercfg /GETACTIVESCHEME); $s.Substring($s.IndexOf('(')+1).TrimEnd(')'); Start-Sleep 2 }
+#    拿到四档方案名后： --gear-map "节能=Quiet,平衡=Balance,性能=Beast,极致=Extreme"
+
+# ② 影子 run + 帧标同窗（PresentMon 并行，见 §3）
+$pmCsv='artifacts\datasets\pm_shadow_W2.csv'
+Start-Process .\tools\presentmon\PresentMon-2.6.0-x64.exe -ArgumentList '--timed','7200',
+  '--session_name','PMSh','--output_file',$pmCsv,'--date_time','--terminate_after_timed','--no_console_stats' -WindowStyle Hidden
+python tools\shadow_run.py --seconds 7200 --work W2 --fps-file $pmCsv --fps-process <game.exe> `
+  --out artifacts\samples\e4_shadow_W2_20261014.jsonl
+python tools\fps_join.py  --shadow artifacts\datasets\D_safe_shadow_A_part5.csv --pm $pmCsv --process <game.exe>
+python tools\e4_shadow_report.py --gear-map "节能=Quiet,平衡=Balance,性能=Beast,极致=Extreme" `
+  --baseline-p95 <只读基线窗口的 p95>
+```
+
+- [ ] Fn+Q 四档校准走一遍（拿到 scheme→gear 映射，解锁 c1）
+- [ ] 影子 run 与 PresentMon 同窗（解锁 c3）
+- [ ] 补 W1/W2 各 5 分钟 + DC 列 + 真实插拔事件（覆盖与插拔项，`tools/plug_watch.py` 已就绪）
+- [ ] CPU 温度通道（MSR/签名驱动）——pre-E5 只能 proxy，属已知局限，E5 前不解除
+

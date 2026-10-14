@@ -47,7 +47,13 @@
 - [ ] Real Return +10% vs B2 anchor, shield not up (needs E4/E5 live + perf labels).
   - r27: synth BO +1.3%, B2 proxy anchor 71.4; perf chain ready, live still gate-locked.
 - [ ] E4 shadow gate (>=8h valid coverage: game>=2h + office>=2h + idle>=1h + >=1 plug event).
-  - r27 gap matrix: idle 9.71h OK; office 1.92h / game 1.92h (each ~5 min short); plug 0;
-    **shadow-run link (policy inference + fence trial + BlackBox, dry-run) not implemented yet** —
-    this, not wall time, is the E4 blocker.
+  - r28: **shadow-run link implemented** — `tools/shadow_run.py` (sensing + stub policy + fence trial +
+    BlackBox 12 fields + L2 dry-run only, real AC/DC via GetSystemPowerStatus, powercfg scheme as the
+    in-service signal) + `tools/e4_shadow_report.py` (four criteria + coverage matrix + open_items).
+    Smoke: 10/10 BlackBox complete, 0 errors, 0 budget overruns, fence OK x10 (0.0103ms);
+    c1 `FAIL agreement_rate 0.0` once calibrated via `--gear-map` (shadow suggests Balance, in-service is
+    节能/Quiet), c2 PASS (L2+ = 0), c3 BLOCKED (no frames), c4 PASS, `e4_ready=false`.
+  - r27 gap matrix still open: idle 9.71h OK; office 1.92h / game 1.92h (each ~5 min short); plug 0.
+    Remaining unlocks: Fn+Q calibration walk (c1), PresentMon same-window run (c3), W1/W2 + DC + real plug.
+  - Known limit: no CPU temperature channel pre-E5 -> fence fed a labelled GPU proxy; live stays LOCKED.
 - [ ] Freeze D_safe as P6 replay buffer snapshot + tag.
