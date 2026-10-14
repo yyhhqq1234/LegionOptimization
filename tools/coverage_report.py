@@ -11,7 +11,14 @@ WORKS = ["W0", "W1", "W2", "W3", "W4", "W5", "W6", "W7"]
 CELL_TARGET = 80
 
 rows = []
-for p in sorted(DATA.glob("D_safe_shadow_A*.csv")):
+# optimize (P4 r27): only *_part*.csv feed the counts. The pre-r27 glob
+# ("D_safe_shadow_A*.csv") also matched the legacy rollup table and reported
+# 83234 rows for 48753 real samples (10352 keys double counted, 34481 phantom).
+legacy = DATA / "D_safe_shadow_A.csv"
+if legacy.exists():
+    print(f"WARN: legacy rollup present ({legacy.name}) - excluded from counts; "
+          f"use part naming for new captures", file=sys.stderr)
+for p in sorted(DATA.glob("D_safe_shadow_A_part*.csv")):
     try:
         with p.open(encoding="utf-8") as f:
             for r in csv.DictReader(f):

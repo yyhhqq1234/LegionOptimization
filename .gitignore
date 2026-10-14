@@ -47,6 +47,10 @@ artifacts/*
 !artifacts/README.md
 !artifacts/samples/
 
+# P4 r27: PresentMon 便携 exe 本体（~1MB 二进制）不进仓，只留 README + 下载命令
+tools/presentmon/*.exe
+tools/presentmon/*.zip
+
 # 本地私有内容（AGENTS.md 铁律 10：新增私有内容必须即时补 ignore）
 *.local.*
 *.private.*
