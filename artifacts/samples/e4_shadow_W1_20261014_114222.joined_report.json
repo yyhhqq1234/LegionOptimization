@@ -1,0 +1,103 @@
+{
+  "generated_from": "artifacts/samples/e4_shadow_W1_20261014_114222.joined.jsonl",
+  "rows": 669,
+  "coverage": {
+    "cells": {
+      "W0/AC": 9.77,
+      "W1/AC": 2.29,
+      "W2/AC": 1.92
+    },
+    "e4_requirements": [
+      {
+        "work": "W0",
+        "required_h": 1.0,
+        "hours_by_cell": {
+          "W0/AC": 9.77
+        },
+        "hours_total": 9.77,
+        "status": "PASS"
+      },
+      {
+        "work": "W1",
+        "required_h": 2.0,
+        "hours_by_cell": {
+          "W1/AC": 2.29
+        },
+        "hours_total": 2.29,
+        "status": "PASS"
+      },
+      {
+        "work": "W2",
+        "required_h": 2.0,
+        "hours_by_cell": {
+          "W2/AC": 1.92
+        },
+        "hours_total": 1.92,
+        "status": "SHORT"
+      }
+    ],
+    "plug_events": 0,
+    "plug_rows": []
+  },
+  "c1_action_agreement": {
+    "shadow_gear_distribution": {
+      "Balance": 669
+    },
+    "in_service_scheme_distribution": {
+      "\u8282\u80fd": 669
+    },
+    "scheme_changes": 0,
+    "required": "agreement >= 85%",
+    "status": "BLOCKED",
+    "reason": "no second policy version to compare against (in-service == shadow == stub-1)",
+    "note": "criterion 1 needs a new logic vs the in-service policy at P6; shadow-vs-manual gear is c1b, informational"
+  },
+  "c1b_shadow_vs_manual_gear": {
+    "status": "OBSERVED",
+    "shadow_vs_manual_gear_rate": 1.0,
+    "counted_rows": 669,
+    "gear_distribution": {
+      "Balance": 669
+    },
+    "note": "informational only: manual gear is not the in-service policy output"
+  },
+  "c2_trial_trip_rate": {
+    "status": "PASS",
+    "levels": {
+      "OK": 669
+    },
+    "ticks": 669,
+    "l1_plus_rate": 0.0,
+    "l2_plus_count": 0,
+    "required": "L2+ trial trips == 0; L1+ <= in-service + 2pp",
+    "in_service_trip_rate": "BLOCKED-no-live-baseline",
+    "l2_plus_rows": []
+  },
+  "c3_fluency_neutral": {
+    "status": "BLOCKED",
+    "reason": "no in-service frame baseline: single policy version, no paired run",
+    "required": "shadow window p95 within +-5% of the same-period in-service p95"
+  },
+  "c3b_window_spread": {
+    "status": "OBSERVED",
+    "baseline_p95_ms": 22.05,
+    "baseline_source": "earliest-20pct-of-labelled-rows",
+    "shadow_median_p95_ms": 37.98,
+    "deviation": 0.7224,
+    "labelled_rows": 417,
+    "note": "window spread only; not the fence criterion"
+  },
+  "c4_zero_crash": {
+    "status": "PASS",
+    "errors": 0,
+    "budget_overruns": 0,
+    "slow_ticks_gt_1.5s": 0,
+    "required": "zero exception, zero 50ms inference overrun"
+  },
+  "e4_ready": false,
+  "open_items": [
+    "c1_action_agreement",
+    "c3_fluency_neutral",
+    "coverage/plug hours short"
+  ]
+}

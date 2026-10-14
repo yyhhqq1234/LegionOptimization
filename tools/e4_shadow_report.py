@@ -163,11 +163,14 @@ def main():
                             "sources": (r.get("fence") or {}).get("trigger_sources")}
                            for r in trip_rows[:5]]}
 
-    # criterion 3: fluency neutral (p95 within +-5% of baseline)
+    # criterion 3: fluency neutral = shadow p95 vs the IN-SERVICE version's p95 over the SAME
+    # period (fence 5.3). With a single policy version and no in-service frame record, the only
+    # defensible baseline would come from a paired run, so the criterion is BLOCKED (r33 wording
+    # fix). The spread inside one window is kept as c3b: observed, non-gating - an early-vs-late
+    # split of a single window is NOT a shadow-vs-in-service comparison.
     p95s = p95_list(rows)
     if not p95s:
-        c3 = {"status": "BLOCKED", "reason": "no frame labels in the shadow rows",
-              "required": "window p95 within +-5% of same-class baseline"}
+        c3b = {"status": "BLOCKED", "reason": "no frame labels in the shadow rows"}
     else:
         if args.baseline_p95:
             base = float(args.baseline_p95)
@@ -178,10 +181,13 @@ def main():
             base_src = "earliest-20pct-of-labelled-rows"
         med = statistics.median(p95s)
         dev = (med - base) / base if base else 0.0
-        c3 = {"status": "PASS" if abs(dev) <= P95_TOL else "FAIL",
-              "baseline_p95_ms": round(base, 3), "baseline_source": base_src,
-              "shadow_median_p95_ms": round(med, 3), "deviation": round(dev, 4),
-              "labelled_rows": len(p95s), "required": "within +-5%"}
+        c3b = {"status": "OBSERVED", "baseline_p95_ms": round(base, 3), "baseline_source": base_src,
+               "shadow_median_p95_ms": round(med, 3), "deviation": round(dev, 4),
+               "labelled_rows": len(p95s),
+               "note": "window spread only; not the fence criterion"}
+    c3 = {"status": "BLOCKED",
+          "reason": "no in-service frame baseline: single policy version, no paired run",
+          "required": "shadow window p95 within +-5% of the same-period in-service p95"}
 
     # criterion 4: zero crash
     errors = sum(1 for r in rows if r.get("error"))
@@ -208,7 +214,8 @@ def main():
            "coverage": {"cells": hours, "e4_requirements": cov,
                         "plug_events": nplug, "plug_rows": plug_rows[:3]},
            "c1_action_agreement": c1, "c1b_shadow_vs_manual_gear": c1b,
-           "c2_trial_trip_rate": c2, "c3_fluency_neutral": c3, "c4_zero_crash": c4,
+           "c2_trial_trip_rate": c2, "c3_fluency_neutral": c3, "c3b_window_spread": c3b,
+           "c4_zero_crash": c4,
            "e4_ready": ready,
            "open_items": [k for k, v in (("c1_action_agreement", c1), ("c3_fluency_neutral", c3))
                           if v["status"] != "PASS"] +

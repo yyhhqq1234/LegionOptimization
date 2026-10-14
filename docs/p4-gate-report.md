@@ -190,5 +190,36 @@ python tools\e4_shadow_report.py --gear-map "节能=Quiet,平衡=Balance,性能=
 6. `tools/coverage_report.py` 自 r32 起额外输出 `gear_distribution`，使档位维度的真实覆盖可见
    （当轮实测：`Balance-readonly` 48753 常量 / `mode:2` 124 / `Quiet` 104 / `Balance` 46 真标签）。
 
+## 10. r33：c3 口径修正 + 办公窗口实测（900s，2026-10-14 11:42–11:57）
+
+命令：`python tools\run_shadow_window.py --seconds 900 --work W1 --process msedge.exe --report`
+
+| 项 | 实测值 |
+|---|---|
+| ticks / BlackBox | 669 / **669 complete** |
+| errors / timeouts | 0 / 0 |
+| 帧标回填 | 417/669 行（msedge.exe；偏移 −28796.9s 自动重定基） |
+| 覆盖 | W0/AC 9.77h PASS、**W1/AC 2.29h PASS**、W2/AC 1.92h SHORT、plug 0 |
+| c1 | BLOCKED（无第二策略版本） |
+| **c1b** | **OBSERVED rate 1.00**（669/669：stub 建议 Balance，操作者当时为均衡模式） |
+| c2 | PASS（levels 全 OK，L2+ = 0） |
+| c3 | 由 FAIL **改为 BLOCKED**（口径修正，见下） |
+| c4 | PASS（errors 0） |
+| c3b（新增观察项） | 窗口最早 20% p95 22.05ms → 全段中位 37.98ms（+72%） |
+
+**c1b=1.00 的读法（防误读）**：stub 是静态包络（恒返回 Balance），而操作者当时恰在均衡模式，
+两者一致是巧合，**不构成策略性能证据**；只有在 P6 引入真策略后，c1b 才具备诊断意义。
+
+**c3 口径修正（与 c1 同源）**：
+
+- fence §5.3 要求「影子窗口 p95 / 1% Low 与**同期实际**差值在 ±5% 内」——"同期实际"= 在运版本的同期帧记录。
+- 本机只有一个策略版本，也没有在运版本的帧记录；用"同一窗口最早 20%"当基线**不成立**
+  （那是窗口内负载漂移，不是影子 vs 在运对比）。
+- 处置：`c3 = BLOCKED-no-in-service-frame-baseline`；窗口内漂移降级为 **c3b**（OBSERVED，不计入 `e4_ready`）。
+- 解锁路径：P6 影子阶段与在运版本**并行**采集同期帧标（同窗口双版本），或先给在运版本建立帧基线。
+
+**副产品（有诊断价值）**：办公/浏览类别在同一 15 分钟窗口内 p95 从 22ms 漂到 38ms，
+说明该类别窗口内负载不平稳 —— 后续 c3 的"同应用类别"分层必须在**同一时间片内**对比，不能跨时段取基线。
+
 
 
